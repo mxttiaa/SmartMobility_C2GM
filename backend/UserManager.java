@@ -14,8 +14,8 @@ import java.nio.charset.StandardCharsets;
  */
 public class UserManager {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/smart_mobility";
-    private static final String USER = "root";
-    private static final String PASS = "";
+    private static final String USER = "smart_user";
+    private static final String PASS = "smart_password";
 
     /**
      * Ottiene una connessione al database.
@@ -26,13 +26,14 @@ public class UserManager {
 
     /**
      * Verifica se un'email è già registrata nel database.
+     * 
      * @param email L'email da verificare.
      * @return true se l'email esiste, false altrimenti.
      */
     public boolean controllaEsistenzaEmail(String email) {
         String query = "SELECT id FROM Utente WHERE email = ?";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, email);
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next();
@@ -45,13 +46,14 @@ public class UserManager {
 
     /**
      * Salva un nuovo utente nel database, eseguendo l'hashing della password.
+     * 
      * @param utente L'oggetto Utente da salvare.
      * @return true se il salvataggio è andato a buon fine, false altrimenti.
      */
     public boolean salvaUtente(Utente utente) {
         String query = "INSERT INTO Utente (nome, cognome, email, numeroTelefono, password, statoAutenticato) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, utente.getNome());
             stmt.setString(2, utente.getCognome());
             stmt.setString(3, utente.getEmail());
@@ -68,14 +70,15 @@ public class UserManager {
 
     /**
      * Valida le credenziali fornite per l'accesso.
-     * @param email L'email fornita.
+     * 
+     * @param email    L'email fornita.
      * @param password La password in chiaro.
      * @return true se le credenziali sono valide, false altrimenti.
      */
     public boolean validaCredenziali(String email, String password) {
         String query = "SELECT id FROM Utente WHERE email = ? AND password = ?";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+                PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, email);
             stmt.setString(2, hashPassword(password));
             try (ResultSet rs = stmt.executeQuery()) {
@@ -89,6 +92,7 @@ public class UserManager {
 
     /**
      * Esegue l'hashing della password utilizzando l'algoritmo SHA-256.
+     * 
      * @param password La password in chiaro.
      * @return L'hash esadecimale della password.
      */
