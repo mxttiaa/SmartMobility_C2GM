@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Mobility - Login & Registrazione</title>
+    <meta name="description" content="Accedi o registrati per utilizzare i servizi di Smart Mobility.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Mobility</h1>
+        
+        <div class="forms-wrapper">
+            <!-- Form Registrazione (UC-01) -->
+            <section class="form-section">
+                <h2>Registrazione</h2>
+                <form id="register-form">
+                    <div class="input-group">
+                        <label for="reg-nome">Nome</label>
+                        <input type="text" id="reg-nome" name="nome" required placeholder="Inserisci il tuo nome">
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-cognome">Cognome</label>
+                        <input type="text" id="reg-cognome" name="cognome" required placeholder="Inserisci il tuo cognome">
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-email">E-mail</label>
+                        <input type="email" id="reg-email" name="email" required placeholder="esempio@email.com">
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-password">Password</label>
+                        <input type="password" id="reg-password" name="password" required placeholder="Crea una password">
+                    </div>
+                    <button type="submit">Registrati</button>
+                    <!-- Div vuoto per messaggi registrazione -->
+                    <div id="register-message" class="message"></div>
+                </form>
+            </section>
+
+            <!-- Form Accesso (UC-02) -->
+            <section class="form-section">
+                <h2>Accesso</h2>
+                <form id="login-form">
+                    <div class="input-group">
+                        <label for="login-email">E-mail</label>
+                        <input type="email" id="login-email" name="email" required placeholder="La tua e-mail">
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" name="password" required placeholder="La tua password">
+                    </div>
+                    <button type="submit">Accedi</button>
+                    <!-- Div vuoto per messaggi accesso -->
+                    <div id="login-message" class="message"></div>
+                </form>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Script JavaScript per la logica -->
+    <script src="pp.js"></script>
+</body>
+</html>
