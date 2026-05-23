@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * Controller per la gestione delle richieste REST relative agli Utenti.
  */
 public class UtenteController {
-    
+
     private UserManager userManager;
 
     public UtenteController() {
@@ -37,14 +37,32 @@ public class UtenteController {
     }
 
     /**
+     * Aggiunge gli header CORS alla risposta HTTP per aggirare il blocco del
+     * browser.
+     */
+    private void addCorsHeaders(HttpExchange exchange) {
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+    }
+
+    /**
      * Handler per l'endpoint /api/registrazione
      */
     class RegistrazioneHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            addCorsHeaders(exchange);
+
+            // Gestione della richiesta di Preflight
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1); // 204 No Content
+                return;
+            }
+
             if ("POST".equals(exchange.getRequestMethod())) {
                 String requestBody = readRequestBody(exchange);
-                
+
                 String email = extractJsonField(requestBody, "email");
                 String nome = extractJsonField(requestBody, "nome");
                 String cognome = extractJsonField(requestBody, "cognome");
@@ -86,9 +104,17 @@ public class UtenteController {
     class AccessoHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            addCorsHeaders(exchange);
+
+            // Gestione della richiesta di Preflight
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1); // 204 No Content
+                return;
+            }
+
             if ("POST".equals(exchange.getRequestMethod())) {
                 String requestBody = readRequestBody(exchange);
-                
+
                 String email = extractJsonField(requestBody, "email");
                 String password = extractJsonField(requestBody, "password");
 
@@ -113,7 +139,8 @@ public class UtenteController {
      */
     private String readRequestBody(HttpExchange exchange) throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 sb.append(line);
@@ -135,7 +162,8 @@ public class UtenteController {
     }
 
     /**
-     * Utility basilare per estrarre il valore di un campo stringa da un JSON senza librerie esterne.
+     * Utility basilare per estrarre il valore di un campo stringa da un JSON senza
+     * librerie esterne.
      * Funziona per formati del tipo "campo" : "valore".
      */
     private String extractJsonField(String json, String field) {
