@@ -1,5 +1,8 @@
 package backend;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -13,9 +16,25 @@ import java.nio.charset.StandardCharsets;
  * Classe deputata all'accesso ai dati per l'entità Utente.
  */
 public class UserManager {
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/smart_mobility";
-    private static final String USER = "smart_user";
-    private static final String PASS = "smart_password";
+    
+    // Le credenziali non sono più hardcoded, verranno popolate dinamicamente
+    private static String DB_URL;
+    private static String USER;
+    private static String PASS;
+
+    // Blocco statico eseguito al momento del caricamento della classe
+    static {
+        Properties props = new Properties();
+        try (FileInputStream in = new FileInputStream("config.properties")) {
+            props.load(in);
+            DB_URL = props.getProperty("db.url");
+            USER = props.getProperty("db.user");
+            PASS = props.getProperty("db.password");
+        } catch (IOException e) {
+            System.err.println("Errore: Impossibile leggere il file config.properties dalla root del progetto.");
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Ottiene una connessione al database.
