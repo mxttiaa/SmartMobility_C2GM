@@ -31,6 +31,10 @@ public class UtenteController {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         server.createContext("/api/registrazione", new RegistrazioneHandler());
         server.createContext("/api/accesso", new AccessoHandler());
+
+        PagamentoController pagamentoController = new PagamentoController();
+        server.createContext("/api/pagamenti/registrazione", pagamentoController.getRegistrazioneHandler());
+
         server.setExecutor(null); // crea un default executor
         server.start();
         System.out.println("UtenteController: API in ascolto sulla porta 8080...");

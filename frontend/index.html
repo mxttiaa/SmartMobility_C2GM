@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,12 @@
     <meta name="description" content="Accedi o registrati per utilizzare i servizi di Smart Mobility.">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <h1>Smart Mobility</h1>
-        
-        <div class="forms-wrapper">
+
+        <div id="auth-view" class="forms-wrapper">
             <!-- Form Registrazione (UC-01) -->
             <section class="form-section">
                 <h2>Registrazione</h2>
@@ -22,7 +24,8 @@
                     </div>
                     <div class="input-group">
                         <label for="reg-cognome">Cognome</label>
-                        <input type="text" id="reg-cognome" name="cognome" required placeholder="Inserisci il tuo cognome">
+                        <input type="text" id="reg-cognome" name="cognome" required
+                            placeholder="Inserisci il tuo cognome">
                     </div>
                     <div class="input-group">
                         <label for="reg-email">E-mail</label>
@@ -30,7 +33,8 @@
                     </div>
                     <div class="input-group">
                         <label for="reg-password">Password</label>
-                        <input type="password" id="reg-password" name="password" required placeholder="Crea una password">
+                        <input type="password" id="reg-password" name="password" required
+                            placeholder="Crea una password">
                     </div>
                     <button type="submit">Registrati</button>
                     <!-- Div vuoto per messaggi registrazione -->
@@ -48,7 +52,8 @@
                     </div>
                     <div class="input-group">
                         <label for="login-password">Password</label>
-                        <input type="password" id="login-password" name="password" required placeholder="La tua password">
+                        <input type="password" id="login-password" name="password" required
+                            placeholder="La tua password">
                     </div>
                     <button type="submit">Accedi</button>
                     <!-- Div vuoto per messaggi accesso -->
@@ -56,9 +61,57 @@
                 </form>
             </section>
         </div>
+
+        <!-- Vista successiva all'accesso -->
+        <div id="dashboard-view" class="dashboard-wrapper hidden">
+            <section class="form-section">
+                <h2>Dashboard Utente</h2>
+                <p style="margin-bottom: 1.5rem; text-align: center; color: var(--text-muted);">Gestisci qui i tuoi
+                    metodi di pagamento e i servizi.</p>
+
+                <h3>Aggiungi Metodo di Pagamento</h3>
+                <form id="payment-form">
+                    <div class="input-group">
+                        <label for="pay-tipo">Tipo Pagamento</label>
+                        <select id="pay-tipo" name="tipoPagamento" required>
+                            <option value="Carta di Credito">Carta di Credito</option>
+                            <option value="Carta di Debito">Carta di Debito</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="pay-intestatario">Intestatario</label>
+                        <input type="text" id="pay-intestatario" name="intestatario" required
+                            placeholder="Nome e Cognome">
+                    </div>
+                    <div class="input-group">
+                        <label for="pay-numero">Numero Carta</label>
+                        <input type="text" id="pay-numero" name="numeroCarta" required placeholder="16 cifre"
+                            minlength="13" maxlength="19" pattern="\d{13,19}" title="Solo numeri, da 13 a 19 cifre"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    <div class="input-group">
+                        <label for="pay-scadenza">Data Scadenza</label>
+                        <input type="text" id="pay-scadenza" name="dataScadenza" required placeholder="MM/YY"
+                            pattern="(0[1-9]|1[0-2])\/\d{2}">
+                    </div>
+                    <div class="input-group">
+                        <label for="pay-cvv">CVV</label>
+                        <input type="text" id="pay-cvv" name="cvv" required placeholder="3 cifre" minlength="3"
+                            maxlength="4" pattern="\d{3,4}" title="Solo numeri, 3 o 4 cifre"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    <!-- Simulo id utente hardcoded dato che non c'è sessione attiva -->
+                    <input type="hidden" id="pay-idutente" name="idUtente" value="1">
+
+                    <button type="submit">Salva Metodo</button>
+                    <div id="payment-message" class="message"></div>
+                </form>
+            </section>
+        </div>
     </div>
-    
+
     <!-- Script JavaScript per la logica -->
     <script src="pp.js"></script>
 </body>
+
 </html>
