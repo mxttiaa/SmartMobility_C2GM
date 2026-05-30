@@ -35,6 +35,8 @@ public class UtenteController {
         PagamentoController pagamentoController = new PagamentoController();
         server.createContext("/api/pagamenti/registrazione", pagamentoController.getRegistrazioneHandler());
 
+        server.createContext("/api/mezzo", new MezzoController());
+
         server.setExecutor(null); // crea un default executor
         server.start();
         System.out.println("UtenteController: API in ascolto sulla porta 8080...");
