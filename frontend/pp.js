@@ -87,6 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (response.ok) {
+                    const responseData = await response.json();
+                    if (responseData.token) {
+                        localStorage.setItem('token', responseData.token);
+                    }
+
                     // Accesso consentito
                     showMessage(loginMessage, true, 'Accesso effettuato con successo!');
                     loginForm.reset();

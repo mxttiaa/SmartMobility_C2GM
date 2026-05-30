@@ -130,7 +130,9 @@ public class UtenteController {
                 }
 
                 if (userManager.validaCredenziali(email, password)) {
-                    sendResponse(exchange, 200, "{\"messaggio\":\"Accesso effettuato con successo\"}");
+                    int idUtente = 1; // ID fittizio per questo sprint come da requisiti
+                    String token = SessionManager.getInstance().createSession(idUtente);
+                    sendResponse(exchange, 200, "{\"messaggio\":\"Accesso effettuato\",\"token\":\"" + token + "\"}");
                 } else {
                     sendResponse(exchange, 401, "{\"errore\":\"Credenziali errate\"}");
                 }
