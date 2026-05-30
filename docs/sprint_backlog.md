@@ -6,14 +6,6 @@ Utente – UT.01
 
 ---
 
-Utente – UT.03    
-**COME** utente    
-**DEVO POTER** visualizzare le caratteristiche del mezzo selezionato (tipologia, portata massima e distanza percorribile stimata)  
-**PER CONSEGUIRE** l'adeguatezza rispetto al percorso previsto.  
-*descrizione:* Esposizione delle caratteristiche tecniche e dello stato di carica del veicolo selezionato per una scelta consapevole.  
-
----
-
 Utente – UT.02 
 
 **COME** utente 
@@ -26,3 +18,10 @@ Utente – UT.02
 
 ---
 
+Utente – UT.03    
+**COME** utente    
+**DEVO POTER** visualizzare le caratteristiche del mezzo selezionato (tipologia, portata massima e distanza percorribile stimata)  
+**PER CONSEGUIRE** l'adeguatezza rispetto al percorso previsto.  
+*descrizione:* Esposizione delle caratteristiche tecniche e dello stato di carica del veicolo selezionato per una scelta consapevole.  
+
+---
