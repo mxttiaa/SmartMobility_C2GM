@@ -87,6 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (response.ok) {
+                    const responseData = await response.json();
+                    if (responseData.token) {
+                        localStorage.setItem('token', responseData.token);
+                    }
+
                     // Accesso consentito
                     showMessage(loginMessage, true, 'Accesso effettuato con successo!');
                     loginForm.reset();
@@ -150,6 +155,64 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Errore di rete / Connessione rifiutata
                 showMessage(paymentMessage, false, 'Errore di connessione al server.');
                 console.error('Payment Error:', error);
+            }
+        });
+    }
+
+    /**
+     * Gestione Visualizzazione Caratteristiche Mezzo (UC-03)
+     */
+    const btnCercaMezzo = document.getElementById('btn-cerca-mezzo');
+    const mezzoMessage = document.getElementById('mezzo-message');
+    const mezzoDetails = document.getElementById('mezzo-details');
+
+    if (btnCercaMezzo) {
+        btnCercaMezzo.addEventListener('click', async () => {
+            const idMezzo = document.getElementById('mezzo-id').value;
+            if (!idMezzo) {
+                showMessage(mezzoMessage, false, 'Inserisci un ID mezzo valido.');
+                return;
+            }
+
+            // Simuliamo il token (nella realtà verrebbe salvato nel localStorage dopo il login)
+            // Se l'utente ha fatto login e il backend restituisce un token, andrebbe preso da lì.
+            const token = localStorage.getItem('token') || 'mock-token-123';
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/mezzo?idMezzo=${idMezzo}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    document.getElementById('dettaglio-tipologia').textContent = data.tipologia;
+                    document.getElementById('dettaglio-portata').textContent = data.portataMassima;
+                    document.getElementById('dettaglio-batteria').textContent = data.livelloBatteria;
+                    document.getElementById('dettaglio-distanza').textContent = data.distanzaStimata.toFixed(2);
+                    
+                    mezzoDetails.classList.remove('hidden');
+                    mezzoMessage.style.display = 'none';
+                } else {
+                    mezzoDetails.classList.add('hidden');
+                    let errorMessage = 'Errore nel recupero del mezzo.';
+                    try {
+                        const errorJson = await response.json();
+                        if (errorJson.errore) errorMessage = errorJson.errore;
+                    } catch (e) {
+                        const errorText = await response.text();
+                        if (errorText) errorMessage = errorText;
+                    }
+                    showMessage(mezzoMessage, false, errorMessage);
+                }
+            } catch (error) {
+                mezzoDetails.classList.add('hidden');
+                showMessage(mezzoMessage, false, 'Errore di connessione al server.');
+                console.error('Fetch Mezzo Error:', error);
             }
         });
     }

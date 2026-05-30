@@ -107,6 +107,24 @@
                     <div id="payment-message" class="message"></div>
                 </form>
             </section>
+
+            <!-- Sezione Caratteristiche Mezzo (UC-03) -->
+            <section class="form-section" id="mezzo-section">
+                <h2>Caratteristiche Mezzo</h2>
+                <div class="input-group">
+                    <label for="mezzo-id">ID Mezzo</label>
+                    <input type="number" id="mezzo-id" placeholder="Inserisci ID Mezzo (es. 1, 2, 3)" min="1">
+                </div>
+                <button type="button" id="btn-cerca-mezzo">Visualizza Dettagli</button>
+                <div id="mezzo-message" class="message"></div>
+                
+                <div id="mezzo-details" class="hidden" style="margin-top: 1.5rem; background: var(--bg-color); padding: 1.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                    <p style="margin-bottom: 0.5rem;"><strong>Tipologia:</strong> <span id="dettaglio-tipologia"></span></p>
+                    <p style="margin-bottom: 0.5rem;"><strong>Portata Massima:</strong> <span id="dettaglio-portata"></span> kg</p>
+                    <p style="margin-bottom: 0.5rem;"><strong>Livello Batteria:</strong> <span id="dettaglio-batteria"></span>%</p>
+                    <p><strong>Distanza Stimata:</strong> <span id="dettaglio-distanza"></span> km</p>
+                </div>
+            </section>
         </div>
     </div>
 

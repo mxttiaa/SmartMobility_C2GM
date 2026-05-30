@@ -35,6 +35,8 @@ public class UtenteController {
         PagamentoController pagamentoController = new PagamentoController();
         server.createContext("/api/pagamenti/registrazione", pagamentoController.getRegistrazioneHandler());
 
+        server.createContext("/api/mezzo", new MezzoController());
+
         server.setExecutor(null); // crea un default executor
         server.start();
         System.out.println("UtenteController: API in ascolto sulla porta 8080...");
@@ -128,7 +130,9 @@ public class UtenteController {
                 }
 
                 if (userManager.validaCredenziali(email, password)) {
-                    sendResponse(exchange, 200, "{\"messaggio\":\"Accesso effettuato con successo\"}");
+                    int idUtente = 1; // ID fittizio per questo sprint come da requisiti
+                    String token = SessionManager.getInstance().createSession(idUtente);
+                    sendResponse(exchange, 200, "{\"messaggio\":\"Accesso effettuato\",\"token\":\"" + token + "\"}");
                 } else {
                     sendResponse(exchange, 401, "{\"errore\":\"Credenziali errate\"}");
                 }
