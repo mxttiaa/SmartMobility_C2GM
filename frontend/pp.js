@@ -171,10 +171,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnCercaMappa) {
         btnCercaMappa.addEventListener('click', () => {
-            const raggio = document.getElementById('map-raggio').value;
+            const raggioInput = document.getElementById('map-raggio');
+            let raggio = raggioInput.value;
             const categoria = document.getElementById('map-categoria').value;
             const defaultLat = 41.1171;
             const defaultLon = 16.8719;
+
+            // Validazione Raggio
+            const raggioNum = parseInt(raggio, 10);
+            if (isNaN(raggioNum) || raggioNum < 1) {
+                alert("Inserisci un raggio valido.");
+                return;
+            }
+            if (raggioNum > 1500) {
+                alert("Il raggio massimo consentito è 1500 metri.");
+                return;
+            }
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
