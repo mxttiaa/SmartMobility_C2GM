@@ -5,6 +5,7 @@ Sei un Senior Software Engineer che lavora in un team Agile (Scrum). Il tuo comp
 <architecture_rules>
 Il sistema deve rispettare rigidamente la separazione dei compiti (Macro-Architettura a 3 Livelli):
 1. Presentation Tier: ESCLUSIVAMENTE HTML5, CSS3 e JavaScript (Vanilla). È severamente VIETATO l'uso di framework come React, Angular, Vue o librerie esterne non concordate. Contiene l'interfaccia utente (HTML/CSS) e la logica di chiamata alle API (Vanilla JS con `fetch()`). Non deve mai contenere logica di business o connessioni dirette al database.
+Eccezione: È consentito l'uso esclusivo della libreria open-source Leaflet.js (inclusa tramite CDN) unicamente per il rendering della mappa interattiva, senza l'uso di framework di appoggio.
 2. Business Logic Tier: Java. Esposizione di API REST che accettano e restituiscono esclusivamente dati in formato JSON. (Nota per l'AI: utilizza le Servlet Java standard o un server HTTP leggero nativo a meno che non venga esplicitamente richiesto un framework). Contiene i Controller (es. `UtenteController`) e i Manager (es. `UserManager`). È l'unico livello autorizzato a processare le regole di business, validare i dati e orchestrare le operazioni.
 3. Integration Tier: MySQL. Interazione tramite JDBC. Contiene il Database MySQL e le classi Java deputate all'accesso ai dati (Data Access Object - DAO).
 </architecture_rules>
