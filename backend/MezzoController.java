@@ -92,9 +92,13 @@ public class MezzoController implements HttpHandler {
         StringBuilder jsonBuilder = new StringBuilder("[");
         for (int i = 0; i < vicini.size(); i++) {
             Mezzo m = vicini.get(i);
+            double distanzaStimata = mezzoManager.calcolaDistanzaStimata(m);
             jsonBuilder.append("{")
                 .append("\"idMezzo\":").append(m.getIdMezzo()).append(",")
                 .append("\"tipologia\":\"").append(m.getTipologia()).append("\",")
+                .append("\"portataMassima\":").append(m.getPortataMassima()).append(",")
+                .append("\"livelloBatteria\":").append(m.getLivelloBatteria()).append(",")
+                .append("\"distanzaStimata\":").append(distanzaStimata).append(",")
                 .append("\"latitudine\":").append(m.getLatitudine()).append(",")
                 .append("\"longitudine\":").append(m.getLongitudine())
                 .append("}");

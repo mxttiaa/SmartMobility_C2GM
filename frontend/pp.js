@@ -159,70 +159,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /**
-     * Gestione Visualizzazione Caratteristiche Mezzo (UC-03)
-     */
-    const btnCercaMezzo = document.getElementById('btn-cerca-mezzo');
-    const mezzoMessage = document.getElementById('mezzo-message');
-    const mezzoDetails = document.getElementById('mezzo-details');
 
-    if (btnCercaMezzo) {
-        btnCercaMezzo.addEventListener('click', async () => {
-            const idMezzo = document.getElementById('mezzo-id').value;
-            if (!idMezzo) {
-                showMessage(mezzoMessage, false, 'Inserisci un ID mezzo valido.');
-                return;
-            }
-
-            // Simuliamo il token (nella realtà verrebbe salvato nel localStorage dopo il login)
-            // Se l'utente ha fatto login e il backend restituisce un token, andrebbe preso da lì.
-            const token = localStorage.getItem('token') || 'mock-token-123';
-
-            try {
-                const response = await fetch(`http://localhost:8080/api/mezzo?idMezzo=${idMezzo}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    document.getElementById('dettaglio-tipologia').textContent = data.tipologia;
-                    document.getElementById('dettaglio-portata').textContent = data.portataMassima;
-                    document.getElementById('dettaglio-batteria').textContent = data.livelloBatteria;
-                    document.getElementById('dettaglio-distanza').textContent = data.distanzaStimata.toFixed(2);
-                    
-                    mezzoDetails.classList.remove('hidden');
-                    mezzoMessage.style.display = 'none';
-                } else {
-                    mezzoDetails.classList.add('hidden');
-                    let errorMessage = 'Errore nel recupero del mezzo.';
-                    try {
-                        const errorJson = await response.json();
-                        if (errorJson.errore) errorMessage = errorJson.errore;
-                    } catch (e) {
-                        const errorText = await response.text();
-                        if (errorText) errorMessage = errorText;
-                    }
-                    showMessage(mezzoMessage, false, errorMessage);
-                }
-            } catch (error) {
-                mezzoDetails.classList.add('hidden');
-                showMessage(mezzoMessage, false, 'Errore di connessione al server.');
-                console.error('Fetch Mezzo Error:', error);
-            }
-        });
-    }
 
     /**
      * Gestione Mappa Mezzi Vicini (UC-06)
      */
     const btnCercaMappa = document.getElementById('btn-cerca-mappa');
     const mapMessage = document.getElementById('map-message');
-    let leafletMap = null;
+    let mappaMezzi = null;
     let markersLayer = null;
 
     if (btnCercaMappa) {
@@ -240,7 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     (error) => {
                         console.warn("Geolocalizzazione fallita o negata. Fallback su Zootropolis.");
                         fetchMezziVicini(defaultLat, defaultLon, raggio, categoria);
-                    }
+                    },
+                    { timeout: 5000, maximumAge: 0, enableHighAccuracy: true }
                 );
             } else {
                 console.warn("Geolocalizzazione non supportata dal browser. Fallback su Zootropolis.");
@@ -269,7 +214,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 const mezzi = await response.json();
+                
                 renderMap(lat, lon, mezzi);
+                
+                if (mezzi.length === 0) {
+                    mapMessage.textContent = 'Nessun mezzo disponibile nel raggio scelto.';
+                    mapMessage.className = 'message error';
+                    mapMessage.style.display = 'block';
+                } else {
+                    mapMessage.style.display = 'none';
+                }
             } else {
                 let errorMessage = 'Errore nel recupero dei mezzi.';
                 try {
@@ -288,17 +242,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderMap(userLat, userLon, mezzi) {
-        // Inizializza la mappa se non esiste
-        if (!leafletMap) {
-            leafletMap = L.map('map').setView([userLat, userLon], 14);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(leafletMap);
-            markersLayer = L.layerGroup().addTo(leafletMap);
-        } else {
-            leafletMap.setView([userLat, userLon], 14);
-            markersLayer.clearLayers();
+        // Pulisce l'istanza precedente della mappa per evitare errori di re-inizializzazione
+        if (mappaMezzi !== null) {
+            mappaMezzi.remove();
         }
+
+        mappaMezzi = L.map('map').setView([userLat, userLon], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mappaMezzi);
+        markersLayer = L.layerGroup().addTo(mappaMezzi);
 
         // Marker utente
         L.marker([userLat, userLon], {
@@ -314,12 +267,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Marker mezzi
         mezzi.forEach(m => {
+            const portata = m.portataMassima !== undefined ? m.portataMassima : 'N/D';
+            const batteria = m.livelloBatteria !== undefined ? m.livelloBatteria : 'N/D';
+            const distanza = m.distanzaStimata !== undefined ? m.distanzaStimata.toFixed(2) : 'N/D';
+            
             const popupContent = `
                 <b>ID Mezzo:</b> ${m.idMezzo}<br>
                 <b>Tipologia:</b> ${m.tipologia}<br>
+                <b>Portata Massima:</b> ${portata} kg<br>
+                <b>Livello Batteria:</b> ${batteria}%<br>
+                <b>Distanza Stimata:</b> ${distanza} km<br>
+                <button id="btn-prenota-mock" disabled style="margin-top: 10px; cursor: not-allowed;">Prenota (Prossimamente)</button>
             `;
             L.marker([m.latitudine, m.longitudine]).addTo(markersLayer)
                 .bindPopup(popupContent);
         });
     }
 });
+
+
