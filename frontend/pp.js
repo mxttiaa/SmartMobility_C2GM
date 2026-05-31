@@ -216,4 +216,110 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    /**
+     * Gestione Mappa Mezzi Vicini (UC-06)
+     */
+    const btnCercaMappa = document.getElementById('btn-cerca-mappa');
+    const mapMessage = document.getElementById('map-message');
+    let leafletMap = null;
+    let markersLayer = null;
+
+    if (btnCercaMappa) {
+        btnCercaMappa.addEventListener('click', () => {
+            const raggio = document.getElementById('map-raggio').value;
+            const categoria = document.getElementById('map-categoria').value;
+            const defaultLat = 41.1171;
+            const defaultLon = 16.8719;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        fetchMezziVicini(position.coords.latitude, position.coords.longitude, raggio, categoria);
+                    },
+                    (error) => {
+                        console.warn("Geolocalizzazione fallita o negata. Fallback su Zootropolis.");
+                        fetchMezziVicini(defaultLat, defaultLon, raggio, categoria);
+                    }
+                );
+            } else {
+                console.warn("Geolocalizzazione non supportata dal browser. Fallback su Zootropolis.");
+                fetchMezziVicini(defaultLat, defaultLon, raggio, categoria);
+            }
+        });
+    }
+
+    async function fetchMezziVicini(lat, lon, raggio, categoria) {
+        const token = localStorage.getItem('token') || 'mock-token-123';
+        
+        try {
+            const url = new URL('http://localhost:8080/api/mezzi/vicini');
+            url.searchParams.append('lat', lat);
+            url.searchParams.append('lon', lon);
+            url.searchParams.append('raggio', raggio);
+            url.searchParams.append('categoria', categoria);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const mezzi = await response.json();
+                renderMap(lat, lon, mezzi);
+            } else {
+                let errorMessage = 'Errore nel recupero dei mezzi.';
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.errore) errorMessage = errorJson.errore;
+                } catch (e) {
+                    const errorText = await response.text();
+                    if (errorText) errorMessage = errorText;
+                }
+                showMessage(mapMessage, false, errorMessage);
+            }
+        } catch (error) {
+            showMessage(mapMessage, false, 'Errore di connessione al server.');
+            console.error('Fetch Mappa Error:', error);
+        }
+    }
+
+    function renderMap(userLat, userLon, mezzi) {
+        // Inizializza la mappa se non esiste
+        if (!leafletMap) {
+            leafletMap = L.map('map').setView([userLat, userLon], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(leafletMap);
+            markersLayer = L.layerGroup().addTo(leafletMap);
+        } else {
+            leafletMap.setView([userLat, userLon], 14);
+            markersLayer.clearLayers();
+        }
+
+        // Marker utente
+        L.marker([userLat, userLon], {
+            icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).addTo(markersLayer).bindPopup("<b>La tua posizione</b>").openPopup();
+
+        // Marker mezzi
+        mezzi.forEach(m => {
+            const popupContent = `
+                <b>ID Mezzo:</b> ${m.idMezzo}<br>
+                <b>Tipologia:</b> ${m.tipologia}<br>
+            `;
+            L.marker([m.latitudine, m.longitudine]).addTo(markersLayer)
+                .bindPopup(popupContent);
+        });
+    }
 });

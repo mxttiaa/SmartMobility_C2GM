@@ -35,7 +35,9 @@ public class UtenteController {
         PagamentoController pagamentoController = new PagamentoController();
         server.createContext("/api/pagamenti/registrazione", pagamentoController.getRegistrazioneHandler());
 
-        server.createContext("/api/mezzo", new MezzoController());
+        MezzoController mezzoController = new MezzoController();
+        server.createContext("/api/mezzo", mezzoController);
+        server.createContext("/api/mezzi/vicini", mezzoController);
 
         server.setExecutor(null); // crea un default executor
         server.start();
