@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * DAO per il recupero dei dati del Mezzo dal DB.
@@ -50,7 +52,9 @@ public class MezzoDAO {
                         rs.getInt("idMezzo"),
                         rs.getString("tipologia"),
                         rs.getDouble("portataMassima"),
-                        rs.getDouble("livelloBatteria")
+                        rs.getDouble("livelloBatteria"),
+                        rs.getDouble("latitudine"),
+                        rs.getDouble("longitudine")
                     );
                 }
             }
@@ -58,5 +62,31 @@ public class MezzoDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Recupera tutti i mezzi dal database.
+     * @return Una lista di oggetti Mezzo.
+     */
+    public List<Mezzo> getAllMezzi() {
+        List<Mezzo> mezzi = new ArrayList<>();
+        String sql = "SELECT * FROM Mezzo";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                mezzi.add(new Mezzo(
+                    rs.getInt("idMezzo"),
+                    rs.getString("tipologia"),
+                    rs.getDouble("portataMassima"),
+                    rs.getDouble("livelloBatteria"),
+                    rs.getDouble("latitudine"),
+                    rs.getDouble("longitudine")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return mezzi;
     }
 }

@@ -159,61 +159,142 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /**
-     * Gestione Visualizzazione Caratteristiche Mezzo (UC-03)
-     */
-    const btnCercaMezzo = document.getElementById('btn-cerca-mezzo');
-    const mezzoMessage = document.getElementById('mezzo-message');
-    const mezzoDetails = document.getElementById('mezzo-details');
 
-    if (btnCercaMezzo) {
-        btnCercaMezzo.addEventListener('click', async () => {
-            const idMezzo = document.getElementById('mezzo-id').value;
-            if (!idMezzo) {
-                showMessage(mezzoMessage, false, 'Inserisci un ID mezzo valido.');
+
+    /**
+     * Gestione Mappa Mezzi Vicini (UC-06)
+     */
+    const btnCercaMappa = document.getElementById('btn-cerca-mappa');
+    const mapMessage = document.getElementById('map-message');
+    let mappaMezzi = null;
+    let markersLayer = null;
+
+    if (btnCercaMappa) {
+        btnCercaMappa.addEventListener('click', () => {
+            const raggioInput = document.getElementById('map-raggio');
+            let raggio = raggioInput.value;
+            const categoria = document.getElementById('map-categoria').value;
+            const defaultLat = 41.1171;
+            const defaultLon = 16.8719;
+
+            // Validazione Raggio
+            const raggioNum = parseInt(raggio, 10);
+            if (isNaN(raggioNum) || raggioNum < 1) {
+                alert("Inserisci un raggio valido.");
+                return;
+            }
+            if (raggioNum > 1500) {
+                alert("Il raggio massimo consentito è 1500 metri.");
                 return;
             }
 
-            // Simuliamo il token (nella realtà verrebbe salvato nel localStorage dopo il login)
-            // Se l'utente ha fatto login e il backend restituisce un token, andrebbe preso da lì.
-            const token = localStorage.getItem('token') || 'mock-token-123';
-
-            try {
-                const response = await fetch(`http://localhost:8080/api/mezzo?idMezzo=${idMezzo}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    document.getElementById('dettaglio-tipologia').textContent = data.tipologia;
-                    document.getElementById('dettaglio-portata').textContent = data.portataMassima;
-                    document.getElementById('dettaglio-batteria').textContent = data.livelloBatteria;
-                    document.getElementById('dettaglio-distanza').textContent = data.distanzaStimata.toFixed(2);
-                    
-                    mezzoDetails.classList.remove('hidden');
-                    mezzoMessage.style.display = 'none';
-                } else {
-                    mezzoDetails.classList.add('hidden');
-                    let errorMessage = 'Errore nel recupero del mezzo.';
-                    try {
-                        const errorJson = await response.json();
-                        if (errorJson.errore) errorMessage = errorJson.errore;
-                    } catch (e) {
-                        const errorText = await response.text();
-                        if (errorText) errorMessage = errorText;
-                    }
-                    showMessage(mezzoMessage, false, errorMessage);
-                }
-            } catch (error) {
-                mezzoDetails.classList.add('hidden');
-                showMessage(mezzoMessage, false, 'Errore di connessione al server.');
-                console.error('Fetch Mezzo Error:', error);
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        fetchMezziVicini(position.coords.latitude, position.coords.longitude, raggio, categoria);
+                    },
+                    (error) => {
+                        console.warn("Geolocalizzazione fallita o negata. Fallback su Zootropolis.");
+                        fetchMezziVicini(defaultLat, defaultLon, raggio, categoria);
+                    },
+                    { timeout: 5000, maximumAge: 0, enableHighAccuracy: true }
+                );
+            } else {
+                console.warn("Geolocalizzazione non supportata dal browser. Fallback su Zootropolis.");
+                fetchMezziVicini(defaultLat, defaultLon, raggio, categoria);
             }
         });
     }
+
+    async function fetchMezziVicini(lat, lon, raggio, categoria) {
+        const token = localStorage.getItem('token') || 'mock-token-123';
+        
+        try {
+            const url = new URL('http://localhost:8080/api/mezzi/vicini');
+            url.searchParams.append('lat', lat);
+            url.searchParams.append('lon', lon);
+            url.searchParams.append('raggio', raggio);
+            url.searchParams.append('categoria', categoria);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const mezzi = await response.json();
+                
+                renderMap(lat, lon, mezzi);
+                
+                if (mezzi.length === 0) {
+                    mapMessage.textContent = 'Nessun mezzo disponibile nel raggio scelto.';
+                    mapMessage.className = 'message error';
+                    mapMessage.style.display = 'block';
+                } else {
+                    mapMessage.style.display = 'none';
+                }
+            } else {
+                let errorMessage = 'Errore nel recupero dei mezzi.';
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.errore) errorMessage = errorJson.errore;
+                } catch (e) {
+                    const errorText = await response.text();
+                    if (errorText) errorMessage = errorText;
+                }
+                showMessage(mapMessage, false, errorMessage);
+            }
+        } catch (error) {
+            showMessage(mapMessage, false, 'Errore di connessione al server.');
+            console.error('Fetch Mappa Error:', error);
+        }
+    }
+
+    function renderMap(userLat, userLon, mezzi) {
+        // Pulisce l'istanza precedente della mappa per evitare errori di re-inizializzazione
+        if (mappaMezzi !== null) {
+            mappaMezzi.remove();
+        }
+
+        mappaMezzi = L.map('map').setView([userLat, userLon], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mappaMezzi);
+        markersLayer = L.layerGroup().addTo(mappaMezzi);
+
+        // Marker utente
+        L.marker([userLat, userLon], {
+            icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).addTo(markersLayer).bindPopup("<b>La tua posizione</b>").openPopup();
+
+        // Marker mezzi
+        mezzi.forEach(m => {
+            const portata = m.portataMassima !== undefined ? m.portataMassima : 'N/D';
+            const batteria = m.livelloBatteria !== undefined ? m.livelloBatteria : 'N/D';
+            const distanza = m.distanzaStimata !== undefined ? m.distanzaStimata.toFixed(2) : 'N/D';
+            
+            const popupContent = `
+                <b>ID Mezzo:</b> ${m.idMezzo}<br>
+                <b>Tipologia:</b> ${m.tipologia}<br>
+                <b>Portata Massima:</b> ${portata} kg<br>
+                <b>Livello Batteria:</b> ${batteria}%<br>
+                <b>Distanza Stimata:</b> ${distanza} km<br>
+                <button id="btn-prenota-mock" disabled style="margin-top: 10px; cursor: not-allowed;">Prenota (Prossimamente)</button>
+            `;
+            L.marker([m.latitudine, m.longitudine]).addTo(markersLayer)
+                .bindPopup(popupContent);
+        });
+    }
 });
+
+

@@ -4,9 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Mobility - Login & Registrazione</title>
+    <title>Smart Mobility - Zootropolis</title>
     <meta name="description" content="Accedi o registrati per utilizzare i servizi di Smart Mobility.">
     <link rel="stylesheet" href="style.css">
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 
 <body>
@@ -108,21 +113,31 @@
                 </form>
             </section>
 
-            <!-- Sezione Caratteristiche Mezzo (UC-03) -->
-            <section class="form-section" id="mezzo-section">
-                <h2>Caratteristiche Mezzo</h2>
-                <div class="input-group">
-                    <label for="mezzo-id">ID Mezzo</label>
-                    <input type="number" id="mezzo-id" placeholder="Inserisci ID Mezzo (es. 1, 2, 3)" min="1">
-                </div>
-                <button type="button" id="btn-cerca-mezzo">Visualizza Dettagli</button>
-                <div id="mezzo-message" class="message"></div>
-                
-                <div id="mezzo-details" class="hidden" style="margin-top: 1.5rem; background: var(--bg-color); padding: 1.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color);">
-                    <p style="margin-bottom: 0.5rem;"><strong>Tipologia:</strong> <span id="dettaglio-tipologia"></span></p>
-                    <p style="margin-bottom: 0.5rem;"><strong>Portata Massima:</strong> <span id="dettaglio-portata"></span> kg</p>
-                    <p style="margin-bottom: 0.5rem;"><strong>Livello Batteria:</strong> <span id="dettaglio-batteria"></span>%</p>
-                    <p><strong>Distanza Stimata:</strong> <span id="dettaglio-distanza"></span> km</p>
+
+
+            <!-- Sezione Mappa (UC-06) -->
+            <section class="form-section" id="mappa-section">
+                <h2>Mappa Mezzi Vicini</h2>
+                <form id="map-form">
+                    <div class="input-group">
+                        <label for="map-raggio">Raggio (metri)</label>
+                        <input type="number" id="map-raggio" name="raggio" value="1500" max="1500" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="map-categoria">Categoria</label>
+                        <select id="map-categoria" name="categoria">
+                            <option value="Tutte">Tutte</option>
+                            <option value="Monopattino">Monopattino</option>
+                            <option value="Bici Elettrica">Bici Elettrica</option>
+                            <option value="Scooter Elettrico">Scooter Elettrico</option>
+                        </select>
+                    </div>
+                    <button type="button" id="btn-cerca-mappa">Cerca Mezzi</button>
+                    <div id="map-message" class="message"></div>
+                </form>
+
+                <div id="map"
+                    style="height: 400px; width: 100%; margin-top: 1.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color); z-index: 1;">
                 </div>
             </section>
         </div>
