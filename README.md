@@ -68,3 +68,17 @@ Una volta che la tua Pull Request è stata approvata e unita (merged) nel proget
 `git branch -d nome-del-tuo-ramo`
 
 *(💡 **Nota:** Se Git dovesse bloccarsi dicendo "The branch is not fully merged", ma tu sei assolutamente sicuro che il codice sia già al sicuro sul `main` di GitHub, puoi forzare l'eliminazione usando la D maiuscola: `git branch -D nome-del-tuo-ramo`)*
+
+---
+
+## 🧪 5. Esecuzione dei Test
+Per testare la logica di business (es. `MezzoManager`) senza l'uso di framework esterni, puoi utilizzare una semplice classe Java con un metodo `main`.
+
+**1. Compilare il progetto (inclusi i test):**
+Apri un terminale nella root del progetto ed esegui:  
+`javac -d bin -cp "bin;lib/*" backend/*.java test/backend/*.java`
+
+**2. Eseguire i test:**
+`java -cp "bin;lib/*" test.backend.MezzoManagerTest`  
+
+Se il test ha successo, vedrai un messaggio di conferma nel terminale, altrimenti un messaggio di errore indicherà il fallimento delle asserzioni.

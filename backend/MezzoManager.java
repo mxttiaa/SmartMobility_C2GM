@@ -13,6 +13,11 @@ public class MezzoManager {
         this.mezzoDAO = new MezzoDAO();
     }
 
+    // Costruttore per dependency injection (es. nei test)
+    public MezzoManager(MezzoDAO mezzoDAO) {
+        this.mezzoDAO = mezzoDAO;
+    }
+
     public Mezzo getMezzo(int idMezzo) {
         return mezzoDAO.getMezzoById(idMezzo);
     }
