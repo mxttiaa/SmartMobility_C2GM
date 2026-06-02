@@ -88,6 +88,7 @@ Apri un terminale nella root del progetto ed esegui:
 
 **2. Eseguire i test:**
 `java -cp "bin;lib/*" test.backend.MezzoManagerTest`  
+`java -cp "bin;lib/*" test.backend.FlottaTest`  
 
 Se il test ha successo, vedrai un messaggio di conferma nel terminale, altrimenti un messaggio di errore indicherà il fallimento delle asserzioni.
 
