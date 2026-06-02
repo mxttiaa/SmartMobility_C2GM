@@ -30,6 +30,14 @@ Se vedi la scritta *"API in ascolto sulla porta 8080"*, il backend è pronto. La
 2. Fai clic destro sul file `index.html` e seleziona **"Open with Live Server"**.
 3. Il browser si aprirà automaticamente e potrai testare la registrazione e l'accesso!
 
+### 🔑 Account di Test Preconfigurati
+Il database viene inizializzato con alcuni account fittizi per testare i diversi ruoli del sistema (RBAC):
+
+* **Utente Standard:** (Puoi registrarne uno nuovo tramite l'interfaccia)
+* **Operatore del Servizio (Mappa Globale):**
+  * **Email:** `operatore@zootropolis.it`
+  * **Password:** `123456`
+
 ---
 
 ## 🤝 4. Regole di Sviluppo e Flusso Git
@@ -82,3 +90,5 @@ Apri un terminale nella root del progetto ed esegui:
 `java -cp "bin;lib/*" test.backend.MezzoManagerTest`  
 
 Se il test ha successo, vedrai un messaggio di conferma nel terminale, altrimenti un messaggio di errore indicherà il fallimento delle asserzioni.
+
+---

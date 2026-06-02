@@ -132,12 +132,23 @@
                             <option value="Scooter Elettrico">Scooter Elettrico</option>
                         </select>
                     </div>
-                    <button type="button" id="btn-cerca-mappa">Cerca Mezzi</button>
+                    <button type="submit" id="btn-cerca-mappa">Cerca Mezzi</button>
                     <div id="map-message" class="message"></div>
                 </form>
 
                 <div id="map"
                     style="height: 400px; width: 100%; margin-top: 1.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color); z-index: 1;">
+                </div>
+            </section>
+        </div>
+
+        <!-- Vista Operatore (UC-08) -->
+        <div id="operator-view" class="dashboard-wrapper hidden">
+            <section class="form-section">
+                <h2>Dashboard Operatore - Distribuzione Flotta</h2>
+                <p style="margin-bottom: 1.5rem; text-align: center; color: var(--text-muted);">Visualizzazione di tutti i mezzi sull'area urbana.</p>
+                <div id="map-operator"
+                    style="height: 500px; width: 100%; border-radius: var(--border-radius); border: 1px solid var(--border-color); z-index: 1;">
                 </div>
             </section>
         </div>

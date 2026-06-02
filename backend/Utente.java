@@ -11,8 +11,17 @@ public class Utente {
     private String numeroTelefono;
     private String password;
     private boolean statoAutenticato;
+    private String ruolo;
 
     public Utente() {}
+
+    public String getRuolo() {
+        return ruolo;
+    }
+
+    public void setRuolo(String ruolo) {
+        this.ruolo = ruolo;
+    }
 
     public int getId() {
         return id;

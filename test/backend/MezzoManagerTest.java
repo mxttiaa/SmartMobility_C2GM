@@ -28,8 +28,8 @@ public class MezzoManagerTest {
             @Override
             public List<Mezzo> getAllMezzi() {
                 List<Mezzo> mezzi = new ArrayList<>();
-                mezzi.add(new Mezzo(1, "Monopattino", 100, 100, latVicino, lonVicino));
-                mezzi.add(new Mezzo(2, "Bici Elettrica", 100, 100, latLontano, lonLontano));
+                mezzi.add(new Mezzo(1, "Monopattino", 100, 100, latVicino, lonVicino, "disponibile"));
+                mezzi.add(new Mezzo(2, "Bici Elettrica", 100, 100, latLontano, lonLontano, "disponibile"));
                 return mezzi;
             }
         };

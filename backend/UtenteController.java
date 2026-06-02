@@ -39,6 +39,9 @@ public class UtenteController {
         server.createContext("/api/mezzo", mezzoController);
         server.createContext("/api/mezzi/vicini", mezzoController);
 
+        OperatoreController operatoreController = new OperatoreController();
+        server.createContext("/api/admin/flotta", operatoreController);
+
         server.setExecutor(null); // crea un default executor
         server.start();
         System.out.println("UtenteController: API in ascolto sulla porta 8080...");
@@ -131,10 +134,10 @@ public class UtenteController {
                     return;
                 }
 
-                if (userManager.validaCredenziali(email, password)) {
-                    int idUtente = 1; // ID fittizio per questo sprint come da requisiti
-                    String token = SessionManager.getInstance().createSession(idUtente);
-                    sendResponse(exchange, 200, "{\"messaggio\":\"Accesso effettuato\",\"token\":\"" + token + "\"}");
+                Utente u = userManager.validaCredenziali(email, password);
+                if (u != null) {
+                    String token = SessionManager.getInstance().createSession(u.getId());
+                    sendResponse(exchange, 200, "{\"messaggio\":\"Accesso effettuato\",\"token\":\"" + token + "\", \"ruolo\":\"" + u.getRuolo() + "\"}");
                 } else {
                     sendResponse(exchange, 401, "{\"errore\":\"Credenziali errate\"}");
                 }

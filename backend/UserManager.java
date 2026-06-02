@@ -70,7 +70,7 @@ public class UserManager {
      * @return true se il salvataggio è andato a buon fine, false altrimenti.
      */
     public boolean salvaUtente(Utente utente) {
-        String query = "INSERT INTO Utente (nome, cognome, email, numeroTelefono, password, statoAutenticato) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO Utente (nome, cognome, email, numeroTelefono, password, statoAutenticato, ruolo) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, utente.getNome());
@@ -79,6 +79,7 @@ public class UserManager {
             stmt.setString(4, utente.getNumeroTelefono());
             stmt.setString(5, hashPassword(utente.getPassword()));
             stmt.setBoolean(6, utente.isStatoAutenticato());
+            stmt.setString(7, utente.getRuolo() != null ? utente.getRuolo() : "UTENTE");
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
@@ -94,19 +95,24 @@ public class UserManager {
      * @param password La password in chiaro.
      * @return true se le credenziali sono valide, false altrimenti.
      */
-    public boolean validaCredenziali(String email, String password) {
-        String query = "SELECT id FROM Utente WHERE email = ? AND password = ?";
+    public Utente validaCredenziali(String email, String password) {
+        String query = "SELECT id, ruolo FROM Utente WHERE email = ? AND password = ?";
         try (Connection conn = getConnection();
                 PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, email);
             stmt.setString(2, hashPassword(password));
             try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next();
+                if (rs.next()) {
+                    Utente u = new Utente();
+                    u.setId(rs.getInt("id"));
+                    u.setRuolo(rs.getString("ruolo"));
+                    return u;
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
+        return null;
     }
 
     /**
