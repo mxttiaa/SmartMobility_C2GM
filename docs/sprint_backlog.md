@@ -30,3 +30,10 @@ Utente – UT.05
 
 ---
 
+Operatore del Servizio – OP.01  
+**COME** operatore  
+**DEVO POTER** visualizzare la distribuzione dei mezzi  
+**PER CONSEGUIRE** l'ottimizzazione del posizionamento della flotta.  
+*descrizione:* Controllo della disposizione dei veicoli sull'area urbana per un’ottimizzazione del posizionamento della flotta.
+
+---
