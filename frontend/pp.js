@@ -91,6 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (responseData.token) {
                         localStorage.setItem('token', responseData.token);
                     }
+                    if (responseData.ruolo) {
+                        localStorage.setItem('ruolo', responseData.ruolo);
+                    }
 
                     // Accesso consentito
                     showMessage(loginMessage, true, 'Accesso effettuato con successo!');
@@ -99,7 +102,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Transizione alla scheda successiva
                     setTimeout(() => {
                         document.getElementById('auth-view').classList.add('hidden');
-                        document.getElementById('dashboard-view').classList.remove('hidden');
+                        if (responseData.ruolo === 'OPERATORE') {
+                            document.getElementById('dashboard-view').remove();
+                            document.getElementById('operator-view').classList.remove('hidden');
+                            fetchFlottaOperatore();
+                        } else {
+                            document.getElementById('operator-view').remove();
+                            document.getElementById('dashboard-view').classList.remove('hidden');
+                        }
                     }, 1000); // Mostra il messaggio per 1 secondo prima di cambiare vista
                 } else {
                     // Accesso negato (es. 401 Unauthorized)
@@ -294,6 +304,59 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             L.marker([m.latitudine, m.longitudine]).addTo(markersLayer)
                 .bindPopup(popupContent);
+        });
+    }
+
+    async function fetchFlottaOperatore() {
+        const token = localStorage.getItem('token') || '';
+        try {
+            const response = await fetch('http://localhost:8080/api/admin/flotta', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.ok) {
+                const mezzi = await response.json();
+                renderOperatorMap(41.1171, 16.8719, mezzi); // Zootropolis coords
+            } else {
+                console.error("Errore fetch flotta operatore");
+            }
+        } catch (error) {
+            console.error("Errore di connessione operatore", error);
+        }
+    }
+
+    let mappaOperatore = null;
+    let markersLayerOperatore = null;
+
+    function renderOperatorMap(lat, lon, mezzi) {
+        if (mappaOperatore !== null) {
+            mappaOperatore.remove();
+        }
+        mappaOperatore = L.map('map-operator').setView([lat, lon], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(mappaOperatore);
+        markersLayerOperatore = L.layerGroup().addTo(mappaOperatore);
+
+        mezzi.forEach(m => {
+            let color = 'green';
+            if (m.statoOperativo === 'guasto') color = 'red';
+            else if (m.statoOperativo === 'in uso') color = 'gold';
+
+            const icon = L.icon({
+                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            L.marker([m.latitudine, m.longitudine], { icon }).addTo(markersLayerOperatore)
+                .bindPopup(`<b>ID Mezzo:</b> ${m.idMezzo}<br><b>Tipologia:</b> ${m.tipologia}<br><b>Stato:</b> ${m.statoOperativo || 'N/D'}`);
         });
     }
 });

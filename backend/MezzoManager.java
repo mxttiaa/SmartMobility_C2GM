@@ -22,6 +22,10 @@ public class MezzoManager {
         return mezzoDAO.getMezzoById(idMezzo);
     }
 
+    public List<Mezzo> getAllMezzi() {
+        return mezzoDAO.getAllMezzi();
+    }
+
     /**
      * Calcola la distanza stimata percorribile dal mezzo.
      * La logica dipende dal livello di batteria e dalla tipologia del mezzo.

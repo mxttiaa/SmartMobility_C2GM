@@ -48,13 +48,16 @@ public class MezzoDAO {
             ps.setInt(1, idMezzo);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
+                    String stato;
+                    try { stato = rs.getString("statoOperativo"); } catch (SQLException e) { stato = "disponibile"; }
                     return new Mezzo(
                         rs.getInt("idMezzo"),
                         rs.getString("tipologia"),
                         rs.getDouble("portataMassima"),
                         rs.getDouble("livelloBatteria"),
                         rs.getDouble("latitudine"),
-                        rs.getDouble("longitudine")
+                        rs.getDouble("longitudine"),
+                        stato
                     );
                 }
             }
@@ -75,13 +78,16 @@ public class MezzoDAO {
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
+                String stato;
+                try { stato = rs.getString("statoOperativo"); } catch (SQLException e) { stato = "disponibile"; }
                 mezzi.add(new Mezzo(
                     rs.getInt("idMezzo"),
                     rs.getString("tipologia"),
                     rs.getDouble("portataMassima"),
                     rs.getDouble("livelloBatteria"),
                     rs.getDouble("latitudine"),
-                    rs.getDouble("longitudine")
+                    rs.getDouble("longitudine"),
+                    stato
                 ));
             }
         } catch (SQLException e) {
