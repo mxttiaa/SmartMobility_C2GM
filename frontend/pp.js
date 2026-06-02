@@ -164,13 +164,14 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Gestione Mappa Mezzi Vicini (UC-06)
      */
-    const btnCercaMappa = document.getElementById('btn-cerca-mappa');
+    const mapForm = document.getElementById('map-form');
     const mapMessage = document.getElementById('map-message');
     let mappaMezzi = null;
     let markersLayer = null;
 
-    if (btnCercaMappa) {
-        btnCercaMappa.addEventListener('click', () => {
+    if (mapForm) {
+        mapForm.addEventListener('submit', (e) => {
+            e.preventDefault();
             const raggioInput = document.getElementById('map-raggio');
             let raggio = raggioInput.value;
             const categoria = document.getElementById('map-categoria').value;
