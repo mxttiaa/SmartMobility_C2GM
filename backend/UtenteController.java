@@ -45,6 +45,10 @@ public class UtenteController {
         RichiestaAssistenzaController assistenzaController = new RichiestaAssistenzaController();
         server.createContext("/api/assistenza", assistenzaController);
 
+        // Aggiunta necessaria per abilitare l'endpoint di UC-09
+        NoleggioController noleggioController = new NoleggioController();
+        server.createContext("/api/noleggio/stima", noleggioController);
+
         server.setExecutor(null); // crea un default executor
         server.start();
         System.out.println("UtenteController: API in ascolto sulla porta 8080...");
@@ -140,7 +144,8 @@ public class UtenteController {
                 Utente u = userManager.validaCredenziali(email, password);
                 if (u != null) {
                     String token = SessionManager.getInstance().createSession(u.getId());
-                    sendResponse(exchange, 200, "{\"messaggio\":\"Accesso effettuato\",\"token\":\"" + token + "\", \"ruolo\":\"" + u.getRuolo() + "\"}");
+                    sendResponse(exchange, 200, "{\"messaggio\":\"Accesso effettuato\",\"token\":\"" + token
+                            + "\", \"ruolo\":\"" + u.getRuolo() + "\"}");
                 } else {
                     sendResponse(exchange, 401, "{\"errore\":\"Credenziali errate\"}");
                 }

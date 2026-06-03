@@ -431,6 +431,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 .bindPopup(`<b>ID Mezzo:</b> ${m.idMezzo}<br><b>Tipologia:</b> ${m.tipologia}<br><b>Stato:</b> ${m.statoOperativo || 'N/D'}`);
         });
     }
+    /**
+     * Gestione Stima Costo Noleggio (UC-09)
+     */
+    const stimaForm = document.getElementById('stima-form');
+    const stimaMessage = document.getElementById('stima-message');
+
+    if (stimaForm) {
+        stimaForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(stimaForm);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Parsifica correttamente i valori
+            data.idMezzo = parseInt(data.idMezzo, 10);
+            data.durataMinuti = parseInt(data.durataMinuti, 10);
+            data.distanzaKm = data.distanzaKm ? parseFloat(data.distanzaKm) : 0;
+
+            const token = localStorage.getItem('token') || '';
+
+            try {
+                const response = await fetch('http://localhost:8080/api/noleggio/stima', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    stimaMessage.innerHTML = `<strong>Importo stimato:</strong> ${result.importo} €<br><small>${result.descrizione}</small>`;
+                    stimaMessage.className = 'message success';
+                    stimaMessage.style.display = 'block';
+                    
+                    // Rimuovi il messaggio dopo 8 secondi
+                    setTimeout(() => {
+                        stimaMessage.style.display = 'none';
+                    }, 8000);
+                } else {
+                    let errorMessage = 'Calcolo della stima fallito.';
+                    try {
+                        const errorJson = await response.json();
+                        if (errorJson.errore) errorMessage = errorJson.errore;
+                    } catch (ex) {
+                        const errorText = await response.text();
+                        if (errorText) errorMessage = errorText;
+                    }
+                    showMessage(stimaMessage, false, `Errore: ${errorMessage}`);
+                }
+            } catch (error) {
+                showMessage(stimaMessage, false, 'Errore di connessione al server.');
+                console.error('Stima Error:', error);
+            }
+        });
+    }
 });
 
 

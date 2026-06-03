@@ -114,6 +114,30 @@
             </section>
 
 
+            <!-- Sezione Stima Costo Noleggio (UC-09) -->
+            <section class="form-section" id="stima-section">
+                <h2>Stima Costo Noleggio</h2>
+                <form id="stima-form">
+                    <div class="input-group">
+                        <label for="stima-idMezzo">Seleziona Mezzo:</label>
+                        <select id="stima-idMezzo" name="idMezzo" required>
+                            <option value="1">Monopattino (ID: 1)</option>
+                            <option value="2">Bici Elettrica (ID: 2)</option>
+                            <option value="3">Scooter Elettrico (ID: 3)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="stima-durataMinuti">Durata stimata (minuti):</label>
+                        <input type="number" id="stima-durataMinuti" name="durataMinuti" min="1" required placeholder="Es. 30">
+                    </div>
+                    
+
+                    
+                    <button type="submit" id="btn-calcola-stima">Calcola Stima</button>
+                    <div id="stima-message" class="message" style="margin-top: 15px; text-align: left;"></div>
+                </form>
+            </section>
 
             <!-- Sezione Mappa (UC-06) -->
             <section class="form-section" id="mappa-section">
