@@ -22,6 +22,18 @@ Utente – UT.03
 
 ---
 
+Utente – UT.04
+
+**COME** utente 
+
+**DEVO POTER** inviare richieste di assistenza in tempo reale  
+
+**PER CONSEGUIRE** l’assistenza necessaria alla risoluzione di problemi. 
+
+*descrizione:* Canale di comunicazione con il servizio clienti per ricevere aiuto immediato durante l'utilizzo . 
+
+---
+
 Utente – UT.05    
 **COME** utente    
 **DEVO POTER** visualizzare su una mappa i mezzi disponibili nelle vicinanze entro un raggio scelto dall’utente fino a un massimo di 1500m    

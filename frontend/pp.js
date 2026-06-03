@@ -169,7 +169,59 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /**
+     * Gestione Assistenza Clienti (UC-05)
+     */
+    const assistenzaForm = document.getElementById('assistenza-form');
+    const assistenzaMessage = document.getElementById('assistenza-message');
+    const formContainer = document.getElementById('formContainer');
+    const chatContainer = document.getElementById('chatContainer');
+    const chatBody = document.getElementById('chatBody');
+    const btnChiudiChat = document.getElementById('btn-chiudi-chat');
 
+    if (assistenzaForm) {
+        assistenzaForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const descrizione = document.getElementById('descrizioneProblema').value.trim();
+            if (!descrizione) {
+                showMessage(assistenzaMessage, false, 'La descrizione non può essere vuota.');
+                return;
+            }
+
+            // Rimosso l'uso di fetch(), si passa direttamente alla simulazione locale
+            assistenzaMessage.style.display = 'none';
+            apriChat(descrizione);
+        });
+    }
+
+    function apriChat(messaggioUtente) {
+        formContainer.style.display = "none";
+        chatContainer.style.display = "block";
+        chatBody.innerHTML = '';
+
+        const msgUser = document.createElement('div');
+        msgUser.style.cssText = 'background-color: var(--primary-color); color: white; padding: 12px 15px; border-radius: 15px; border-bottom-right-radius: 2px; max-width: 80%; align-self: flex-end; line-height: 1.4; word-wrap: break-word;';
+        msgUser.innerText = "Tu: " + messaggioUtente;
+        chatBody.appendChild(msgUser);
+
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        setTimeout(() => {
+            const msgBot = document.createElement('div');
+            msgBot.style.cssText = 'background-color: #e9ecef; color: #333; padding: 12px 15px; border-radius: 15px; border-bottom-left-radius: 2px; max-width: 80%; align-self: flex-start; line-height: 1.4; word-wrap: break-word;';
+            msgBot.innerText = `Assistente: Grazie per la segnalazione. La tua richiesta è stata presa in carico. Riceverai assistenza entro breve.`;
+            chatBody.appendChild(msgBot);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }, 800);
+    }
+
+    if (btnChiudiChat) {
+        btnChiudiChat.addEventListener('click', () => {
+            chatContainer.style.display = "none";
+            formContainer.style.display = "block";
+            if (assistenzaForm) assistenzaForm.reset();
+        });
+    }
 
     /**
      * Gestione Mappa Mezzi Vicini (UC-06)
@@ -219,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMezziVicini(lat, lon, raggio, categoria) {
         const token = localStorage.getItem('token') || 'mock-token-123';
-        
+
         try {
             const url = new URL('http://localhost:8080/api/mezzi/vicini');
             url.searchParams.append('lat', lat);
@@ -237,9 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 const mezzi = await response.json();
-                
+
                 renderMap(lat, lon, mezzi);
-                
+
                 if (mezzi.length === 0) {
                     mapMessage.textContent = 'Nessun mezzo disponibile nel raggio scelto.';
                     mapMessage.className = 'message error';
@@ -293,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const portata = m.portataMassima !== undefined ? m.portataMassima : 'N/D';
             const batteria = m.livelloBatteria !== undefined ? m.livelloBatteria : 'N/D';
             const distanza = m.distanzaStimata !== undefined ? m.distanzaStimata.toFixed(2) : 'N/D';
-            
+
             const popupContent = `
                 <b>ID Mezzo:</b> ${m.idMezzo}<br>
                 <b>Tipologia:</b> ${m.tipologia}<br>
