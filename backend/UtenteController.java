@@ -42,6 +42,9 @@ public class UtenteController {
         OperatoreController operatoreController = new OperatoreController();
         server.createContext("/api/admin/flotta", operatoreController);
 
+        RichiestaAssistenzaController assistenzaController = new RichiestaAssistenzaController();
+        server.createContext("/api/assistenza", assistenzaController);
+
         server.setExecutor(null); // crea un default executor
         server.start();
         System.out.println("UtenteController: API in ascolto sulla porta 8080...");

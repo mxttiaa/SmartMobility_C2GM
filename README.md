@@ -18,7 +18,7 @@ Il progetto utilizza un file di configurazione per evitare di condividere le pas
 Apri un terminale nella root del progetto (la cartella principale) ed esegui questi due comandi:
 
 **Per compilare il codice:**
-`javac -d bin backend/*.java`
+`javac -d bin -cp "bin;lib/*" backend/*.java test/backend/*.java`
 
 **Per avviare il server (inclusi i driver MySQL):**
 `java -cp "bin;lib/*" backend.UtenteController`
