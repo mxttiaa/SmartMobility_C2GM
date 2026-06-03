@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnChiudiChat = document.getElementById('btn-chiudi-chat');
 
     if (assistenzaForm) {
-        assistenzaForm.addEventListener('submit', (e) => {
+        assistenzaForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const descrizione = document.getElementById('descrizioneProblema').value.trim();
             if (!descrizione) {
@@ -188,9 +188,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Rimosso l'uso di fetch(), si passa direttamente alla simulazione locale
-            assistenzaMessage.style.display = 'none';
-            apriChat(descrizione);
+            const token = localStorage.getItem('token') || '';
+
+            try {
+                const response = await fetch('http://localhost:8080/api/assistenza', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ descrizioneProblema: descrizione })
+                });
+
+                if (response.ok) {
+                    assistenzaMessage.style.display = 'none';
+                    apriChat(descrizione);
+                } else {
+                    const errorMsg = await response.text();
+                    showMessage(assistenzaMessage, false, `Errore: ${errorMsg || 'Richiesta di assistenza fallita.'}`);
+                }
+            } catch (error) {
+                showMessage(assistenzaMessage, false, 'Errore di connessione al server.');
+                console.error('Assistenza Error:', error);
+            }
         });
     }
 

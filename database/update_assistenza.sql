@@ -1,3 +1,5 @@
+USE smart_mobility;
+
 CREATE TABLE IF NOT EXISTS RichiestaAssistenza (
     id INT AUTO_INCREMENT PRIMARY KEY,
     idUtente INT NOT NULL,
