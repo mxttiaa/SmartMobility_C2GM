@@ -4,7 +4,7 @@
 | **ID** | UC-05 |
 | **Breve descrizione** | L'Utente Registrato apre un canale di comunicazione in tempo reale con il Servizio Clienti per risolvere un problema. |
 | **Attori primari** | Utente registrato |
-| **Attori secondari** | Servizio Clienti |
+| **Attori secondari** | Nessuno |
 | **Precondizione** | L'Utente Registrato ha effettuato l'accesso al sistema. |
 | **Evento innescante** | L'Utente Registrato seleziona l'opzione per richiedere assistenza. |
 | **Post-condizione per successo** | Il Servizio Clienti prende in carico il problema dell'Utente Registrato tramite il canale di comunicazione. |
