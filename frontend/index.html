@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Mobility - Zootropolis</title>
     <meta name="description" content="Accedi o registrati per utilizzare i servizi di Smart Mobility.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -113,32 +115,6 @@
                 </form>
             </section>
 
-
-            <!-- Sezione Stima Costo Noleggio (UC-09) -->
-            <section class="form-section" id="stima-section">
-                <h2>Stima Costo Noleggio</h2>
-                <form id="stima-form">
-                    <div class="input-group">
-                        <label for="stima-idMezzo">Seleziona Mezzo:</label>
-                        <select id="stima-idMezzo" name="idMezzo" required>
-                            <option value="1">Monopattino (ID: 1)</option>
-                            <option value="2">Bici Elettrica (ID: 2)</option>
-                            <option value="3">Scooter Elettrico (ID: 3)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="stima-durataMinuti">Durata stimata (minuti):</label>
-                        <input type="number" id="stima-durataMinuti" name="durataMinuti" min="1" required placeholder="Es. 30">
-                    </div>
-                    
-
-                    
-                    <button type="submit" id="btn-calcola-stima">Calcola Stima</button>
-                    <div id="stima-message" class="message" style="margin-top: 15px; text-align: left;"></div>
-                </form>
-            </section>
-
             <!-- Sezione Mappa (UC-06) -->
             <section class="form-section" id="mappa-section">
                 <h2>Mappa Mezzi Vicini</h2>
@@ -214,6 +190,131 @@
                     style="height: 500px; width: 100%; border-radius: var(--border-radius); border: 1px solid var(--border-color); z-index: 1;">
                 </div>
             </section>
+        </div>
+    </div>
+
+    <!-- ========================================
+         MODAL PRENOTAZIONE / STIMA COSTO (UC-09)
+         ======================================== -->
+    <div id="modal-prenotazione" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-box">
+            <button class="modal-close" id="modal-close-btn" aria-label="Chiudi">&times;</button>
+
+            <div class="modal-header">
+                <h2 id="modal-title">🛴 Prenota Mezzo</h2>
+                <span class="modal-mezzo-badge" id="modal-mezzo-label">ID: — | Tipo: —</span>
+            </div>
+
+            <!-- STEP 1: Inserisci parametri -->
+            <div id="modal-step-form">
+                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;">
+                    Scegli la <strong>destinazione</strong> sulla mappa (o scrivila).
+                    Distanza e tempo di percorrenza verranno calcolati automaticamente
+                    in base alla velocità media del mezzo.<br>
+                    <strong>Limiti:</strong> max 120 min · max 30 km.
+                </p>
+                <form id="modal-stima-form" novalidate>
+
+                    <!-- Destinazione: ricerca testuale -->
+                    <div class="input-group">
+                        <label for="modal-dest-input">Destinazione
+                            <span style="color:var(--text-muted);font-weight:400">(opzionale — clicca la mappa o
+                                scrivi)</span>
+                        </label>
+                        <div style="display:flex;gap:0.5rem;">
+                            <input type="text" id="modal-dest-input" placeholder="Es. Stazione Centrale, Bari"
+                                style="flex:1;" autocomplete="off">
+                            <button type="button" id="btn-cerca-dest"
+                                style="width:auto;padding:0.6rem 1rem;font-size:0.85rem;white-space:nowrap;margin-top:0;">
+                                🔍 Cerca
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mini-mappa destinazione -->
+                    <div style="margin-bottom:1rem;">
+                        <div id="modal-dest-map"
+                            style="height:180px;border-radius:8px;border:1px solid var(--border-color);overflow:hidden;position:relative;">
+                        </div>
+                        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;text-align:center;">
+                            📍 Clicca sulla mappa per scegliere la destinazione
+                        </p>
+                    </div>
+
+                    <!-- Badge riepilogo: distanza + durata calcolate (sola lettura) -->
+                    <div id="modal-distanza-badge" style="display:none;margin-bottom:1rem;
+                        background:linear-gradient(135deg,#eff6ff,#f0fdf4);
+                        border:1px solid #bfdbfe;border-radius:10px;
+                        padding:0.8rem 1rem;">
+                        <div style="display:flex;gap:1.2rem;">
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <span style="font-size:1.3rem;">📏</span>
+                                <div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);font-weight:500;">Distanza</div>
+                                    <div id="modal-distanza-valore"
+                                        style="font-size:1.1rem;font-weight:800;color:var(--primary-color);">—</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <span style="font-size:1.3rem;">⏱️</span>
+                                <div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);font-weight:500;">Tempo stimato</div>
+                                    <div id="modal-durata-valore"
+                                        style="font-size:1.1rem;font-weight:800;color:#059669;">—</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <span style="font-size:1.3rem;">🚀</span>
+                                <div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);font-weight:500;">Vel. media</div>
+                                    <div id="modal-velocita-valore"
+                                        style="font-size:1.1rem;font-weight:800;color:#7c3aed;">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="modal-form-error" class="message error" style="display:none;"></div>
+                    <div class="modal-loader" id="modal-loader">
+                        <span class="spinner"></span> Calcolo in corso…
+                    </div>
+                    <button type="submit" id="btn-calcola-modal">Calcola stima →</button>
+                </form>
+            </div>
+
+            <!-- STEP 2: Risultato stima -->
+            <div id="modal-step-result">
+                <div class="stima-result-box">
+                    <div class="stima-importo" id="modal-importo">—</div>
+                    <div class="stima-descrizione" id="modal-descrizione"></div>
+                </div>
+                <div id="modal-result-error" class="message error" style="display:none;"></div>
+                <!-- Avviso metodo di pagamento mancante (mostrato solo se necessario) -->
+                <div id="modal-nopay-warning" class="message error" style="display:none; text-align:left;">
+                    ⚠️ <strong>Nessun metodo di pagamento salvato.</strong><br>
+                    Per procedere con la prenotazione devi prima
+                    <a href="#payment-form" id="link-vai-pagamento"
+                        style="color:var(--primary-color);font-weight:600;text-decoration:underline;"
+                        onclick="document.getElementById('modal-prenotazione').classList.remove('active');
+                                document.body.style.overflow='';
+                                setTimeout(()=>{document.getElementById('payment-form').scrollIntoView({behavior:'smooth'})},100);">
+                        aggiungere una carta
+                    </a>.
+                </div>
+                <div class="modal-btn-row">
+                    <button class="btn-secondary" id="btn-modifica-stima">← Modifica</button>
+                    <button class="btn-success" id="btn-conferma-prenotazione">✓ Conferma prenotazione</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Prenotazione confermata -->
+            <div id="modal-step-confirm">
+                <div class="conferma-icon">🎉</div>
+                <div class="conferma-title">Prenotazione confermata!</div>
+                <div class="conferma-sub" id="modal-conferma-sub">Il mezzo è stato prenotato con successo.</div>
+                <!-- TODO: al click verrà chiamata l'API /api/noleggio/avvia quando disponibile -->
+                <button id="btn-chiudi-modal-confirm">Chiudi</button>
+            </div>
         </div>
     </div>
 

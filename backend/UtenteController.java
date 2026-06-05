@@ -34,6 +34,7 @@ public class UtenteController {
 
         PagamentoController pagamentoController = new PagamentoController();
         server.createContext("/api/pagamenti/registrazione", pagamentoController.getRegistrazioneHandler());
+        server.createContext("/api/pagamenti/verifica", pagamentoController.getVerificaHandler());
 
         MezzoController mezzoController = new MezzoController();
         server.createContext("/api/mezzo", mezzoController);

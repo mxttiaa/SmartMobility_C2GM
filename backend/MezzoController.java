@@ -10,7 +10,7 @@ import com.sun.net.httpserver.HttpHandler;
  * Controller per la gestione dell'endpoint GET /api/mezzo e /api/mezzi/vicini.
  */
 public class MezzoController implements HttpHandler {
-    
+
     private MezzoManager mezzoManager;
 
     public MezzoController() {
@@ -36,7 +36,7 @@ public class MezzoController implements HttpHandler {
                 sendResponse(exchange, 401, "{\"errore\": \"Non autorizzato: token mancante\"}");
                 return;
             }
-            
+
             String token = authHeader.substring(7);
             Integer idUtente = SessionManager.getInstance().getUserIdByToken(token);
             if (idUtente == null) {
@@ -45,7 +45,7 @@ public class MezzoController implements HttpHandler {
             }
 
             String path = exchange.getRequestURI().getPath();
-            
+
             if ("/api/mezzi/vicini".equals(path)) {
                 handleVicini(exchange);
             } else if ("/api/mezzo".equals(path)) {
@@ -76,10 +76,14 @@ public class MezzoController implements HttpHandler {
                 if (pair.length == 2) {
                     String key = pair[0];
                     String value = pair[1];
-                    if ("lat".equals(key)) lat = Double.parseDouble(value);
-                    else if ("lon".equals(key)) lon = Double.parseDouble(value);
-                    else if ("raggio".equals(key)) raggio = Integer.parseInt(value);
-                    else if ("categoria".equals(key)) categoria = java.net.URLDecoder.decode(value, "UTF-8");
+                    if ("lat".equals(key))
+                        lat = Double.parseDouble(value);
+                    else if ("lon".equals(key))
+                        lon = Double.parseDouble(value);
+                    else if ("raggio".equals(key))
+                        raggio = Integer.parseInt(value);
+                    else if ("categoria".equals(key))
+                        categoria = java.net.URLDecoder.decode(value, "UTF-8");
                 }
             }
         } catch (Exception e) {
@@ -88,20 +92,20 @@ public class MezzoController implements HttpHandler {
         }
 
         List<Mezzo> vicini = mezzoManager.trovaMezziInVicinanza(lat, lon, raggio, categoria);
-        
+
         StringBuilder jsonBuilder = new StringBuilder("[");
         for (int i = 0; i < vicini.size(); i++) {
             Mezzo m = vicini.get(i);
             double distanzaStimata = mezzoManager.calcolaDistanzaStimata(m);
             jsonBuilder.append("{")
-                .append("\"idMezzo\":").append(m.getIdMezzo()).append(",")
-                .append("\"tipologia\":\"").append(m.getTipologia()).append("\",")
-                .append("\"portataMassima\":").append(m.getPortataMassima()).append(",")
-                .append("\"livelloBatteria\":").append(m.getLivelloBatteria()).append(",")
-                .append("\"distanzaStimata\":").append(distanzaStimata).append(",")
-                .append("\"latitudine\":").append(m.getLatitudine()).append(",")
-                .append("\"longitudine\":").append(m.getLongitudine())
-                .append("}");
+                    .append("\"idMezzo\":").append(m.getIdMezzo()).append(",")
+                    .append("\"tipologia\":\"").append(m.getTipologia()).append("\",")
+                    .append("\"portataMassima\":").append(m.getPortataMassima()).append(",")
+                    .append("\"livelloBatteria\":").append(m.getLivelloBatteria()).append(",")
+                    .append("\"distanzaStimata\":").append(distanzaStimata).append(",")
+                    .append("\"latitudine\":").append(m.getLatitudine()).append(",")
+                    .append("\"longitudine\":").append(m.getLongitudine())
+                    .append("}");
             if (i < vicini.size() - 1) {
                 jsonBuilder.append(",");
             }
@@ -137,12 +141,12 @@ public class MezzoController implements HttpHandler {
         double distanzaStimata = mezzoManager.calcolaDistanzaStimata(mezzo);
 
         String jsonRes = "{" +
-            "\"idMezzo\":" + mezzo.getIdMezzo() + "," +
-            "\"tipologia\":\"" + mezzo.getTipologia() + "\"," +
-            "\"portataMassima\":" + mezzo.getPortataMassima() + "," +
-            "\"livelloBatteria\":" + mezzo.getLivelloBatteria() + "," +
-            "\"distanzaStimata\":" + distanzaStimata +
-        "}";
+                "\"idMezzo\":" + mezzo.getIdMezzo() + "," +
+                "\"tipologia\":\"" + mezzo.getTipologia() + "\"," +
+                "\"portataMassima\":" + mezzo.getPortataMassima() + "," +
+                "\"livelloBatteria\":" + mezzo.getLivelloBatteria() + "," +
+                "\"distanzaStimata\":" + distanzaStimata +
+                "}";
 
         exchange.getResponseHeaders().add("Content-Type", "application/json");
         sendResponse(exchange, 200, jsonRes);

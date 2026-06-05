@@ -50,53 +50,49 @@ public class NoleggioController implements HttpHandler {
                     return;
                 }
 
-                // Legge JSON, estrae idMezzo, durataMinuti, distanzaKm
+                // Legge JSON, estrae idMezzo, durataMinuti (opzionale), distanzaKm (opzionale)
                 String requestBody = readRequestBody(exchange);
-                
+
                 Integer idMezzo = extractJsonInt(requestBody, "idMezzo");
-                Integer durataMinuti = extractJsonInt(requestBody, "durataMinuti");
-                Double distanzaKm = extractJsonDouble(requestBody, "distanzaKm");
-
-                if (idMezzo == null || durataMinuti == null) {
-                    sendResponse(exchange, 400, "{\"errore\":\"Parametri mancanti\"}");
+                if (idMezzo == null) {
+                    sendResponse(exchange, 400, "{\"errore\":\"Parametro idMezzo obbligatorio\"}");
                     return;
                 }
 
-                if (distanzaKm == null) {
-                    distanzaKm = 0.0;
-                }
-                
-                // Ottiene il Mezzo tramite MezzoManager
-                Mezzo mezzo = mezzoManager.getMezzo(idMezzo);
-                if (mezzo == null) {
-                    sendResponse(exchange, 404, "{\"errore\":\"Mezzo non trovato\"}");
-                    return;
-                }
-                
-                // Ottiene la tipologia
-                String tipo = mezzo.getTipologia();
-                
-                // Chiama TariffaManager.ottieniTariffaVigente(idMezzo, tipo)
-                Tariffa tariffa = tariffaManager.ottieniTariffaVigente(idMezzo, tipo);
-                if (tariffa == null) {
-                    sendResponse(exchange, 404, "{\"errore\":\"Tariffa non trovata per il mezzo\"}");
-                    return;
-                }
+                // Entrambi opzionali: 0 equivale a \"non fornito\"; NoleggioManager completa il
+                // mancante
+                int durataMinuti = extractJsonInt(requestBody, "durataMinuti") != null
+                        ? extractJsonInt(requestBody, "durataMinuti")
+                        : 0;
+                double distanzaKm = extractJsonDouble(requestBody, "distanzaKm") != null
+                        ? extractJsonDouble(requestBody, "distanzaKm")
+                        : 0.0;
 
-                // Chiama NoleggioManager.stimareCostoNoleggio
-                StimaCostoNoleggio stima = noleggioManager.stimareCostoNoleggio(userId, idMezzo, durataMinuti, distanzaKm);
-                
+                // Delega tutto a NoleggioManager (completamento parametri + validazione +
+                // calcolo)
+                StimaCostoNoleggio stima = noleggioManager.stimareCostoNoleggio(
+                        userId, idMezzo, durataMinuti, distanzaKm);
+
                 // Restituisce JSON
-                String jsonResponse = String.format(java.util.Locale.US, "{\"importo\": %.2f, \"descrizione\": \"%s\"}", 
-                                                    stima.getImporto(), 
-                                                    stima.getDescrizione().replace("\"", "\\\""));
+                String jsonResponse = String.format(java.util.Locale.US,
+                        "{\"importo\": %.2f, \"descrizione\": \"%s\"}",
+                        stima.getImporto(),
+                        stima.getDescrizione().replace("\"", "\\\""));
                 sendResponse(exchange, 200, jsonResponse);
-                
+
             } catch (IllegalArgumentException e) {
-                // Errore 400 per parametri non validi
-                sendResponse(exchange, 400, "{\"errore\":\"Parametri non validi\"}");
+                // 400 con il messaggio preciso generato da NoleggioManager
+                String errMsg = e.getMessage() != null
+                        ? e.getMessage().replace("\"", "'")
+                        : "Parametri non validi";
+                sendResponse(exchange, 400, "{\"errore\":\"" + errMsg + "\"}");
+            } catch (RuntimeException e) {
+                // 404 per mezzo/tariffa non trovati
+                String errMsg = e.getMessage() != null
+                        ? e.getMessage().replace("\"", "'")
+                        : "Risorsa non trovata";
+                sendResponse(exchange, 404, "{\"errore\":\"" + errMsg + "\"}");
             } catch (Exception e) {
-                // Gestisce eccezioni 500
                 e.printStackTrace();
                 sendResponse(exchange, 500, "{\"errore\":\"Errore interno del server\"}");
             }

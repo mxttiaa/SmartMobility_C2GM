@@ -26,13 +26,17 @@ public class PagamentoController {
         return new RegistraMetodoPagamentoHandler();
     }
 
+    public HttpHandler getVerificaHandler() {
+        return new VerificaMetodoPagamentoHandler();
+    }
+
     /**
      * Aggiunge gli header CORS alla risposta HTTP.
      */
     private void addCorsHeaders(HttpExchange exchange) {
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
 
     /**
@@ -88,6 +92,49 @@ public class PagamentoController {
 
             } else {
                 sendResponse(exchange, 405, "{\"errore\":\"Metodo non consentito, atteso POST\"}");
+            }
+        }
+    }
+
+    /**
+     * Handler per GET /api/pagamenti/verifica
+     *
+     * <p>Verifica (tramite il token di sessione) se l'utente autenticato
+     * ha almeno un metodo di pagamento attivo. Risponde con:
+     * <ul>
+     *   <li>200 {"haMetodo": true}  – metodo presente</li>
+     *   <li>200 {"haMetodo": false} – nessun metodo salvato</li>
+     *   <li>401 – token mancante o non valido</li>
+     * </ul>
+     */
+    class VerificaMetodoPagamentoHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            addCorsHeaders(exchange);
+
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            if ("GET".equals(exchange.getRequestMethod())) {
+                // Verifica autenticazione
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                    sendResponse(exchange, 401, "{\"errore\":\"Non autenticato\"}");
+                    return;
+                }
+                String token = authHeader.substring(7);
+                Integer userId = SessionManager.getInstance().getUserIdByToken(token);
+                if (userId == null) {
+                    sendResponse(exchange, 401, "{\"errore\":\"Token non valido o scaduto\"}");
+                    return;
+                }
+
+                boolean haMetodo = pagamentoManager.utenteHaMetodoPagamento(userId);
+                sendResponse(exchange, 200, "{\"haMetodo\": " + haMetodo + "}");
+            } else {
+                sendResponse(exchange, 405, "{\"errore\":\"Metodo non consentito, atteso GET\"}");
             }
         }
     }

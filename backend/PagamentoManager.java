@@ -55,4 +55,16 @@ public class PagamentoManager {
         // 5. Salvataggio su Database
         return metodoPagamentoDAO.inserisciMetodoPagamento(idUtente, mp);
     }
+
+    /**
+     * Verifica se un utente ha almeno un metodo di pagamento attivo salvato.
+     *
+     * @param idUtente L'ID dell'utente da verificare.
+     * @return {@code true} se l'utente ha almeno un metodo di pagamento attivo,
+     *         {@code false} altrimenti (incluso il caso di errore DB, per sicurezza).
+     */
+    public boolean utenteHaMetodoPagamento(int idUtente) {
+        int count = metodoPagamentoDAO.contaMetodiPagamento(idUtente);
+        return count >= 1;
+    }
 }

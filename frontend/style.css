@@ -203,3 +203,243 @@ button:active {
         flex-direction: column;
     }
 }
+
+/* =============================================
+   MODAL PRENOTAZIONE / STIMA COSTO (UC-09)
+   ============================================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    padding: 2rem 2.25rem 2.25rem;
+    width: 100%;
+    max-width: 460px;
+    position: relative;
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.active .modal-box {
+    transform: translateY(0) scale(1);
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    width: auto;
+    padding: 0.25rem 0.5rem;
+    font-size: 1.4rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s ease;
+    margin-top: 0;
+}
+
+.modal-close:hover {
+    color: var(--text-main);
+    background: none;
+    transform: none;
+}
+
+.modal-header {
+    margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+    text-align: left;
+    margin-bottom: 0.25rem;
+    font-size: 1.35rem;
+}
+
+.modal-mezzo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #eff6ff;
+    color: var(--primary-color);
+    border: 1px solid #bfdbfe;
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+/* Step 1 — form parametri */
+#modal-step-form { display: block; }
+
+/* Step 2 — risultato stima */
+#modal-step-result { display: none; }
+
+.stima-result-box {
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    text-align: center;
+    margin-bottom: 1.25rem;
+}
+
+.stima-importo {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.stima-descrizione {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+}
+
+.modal-btn-row {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+.btn-success {
+    background: #16a34a;
+}
+
+.btn-success:hover {
+    background: #15803d;
+}
+
+/* Step 3 — conferma */
+#modal-step-confirm { display: none; }
+
+.conferma-icon {
+    font-size: 3rem;
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.conferma-title {
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #16a34a;
+    margin-bottom: 0.5rem;
+}
+
+.conferma-sub {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Loader spinner nel modal */
+.modal-loader {
+    display: none;
+    text-align: center;
+    padding: 1rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.modal-loader.active {
+    display: block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.spinner {
+    display: inline-block;
+    width: 1.4rem;
+    height: 1.4rem;
+    border: 3px solid #bfdbfe;
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+}
+
+/* =============================================
+   MINI-MAPPA DESTINAZIONE NEL MODAL (UC-09)
+   ============================================= */
+
+/* Il container della mini-mappa ha overflow:hidden per evitare
+   che i controlli Leaflet escano dai bordi del modal-box */
+#modal-dest-map {
+    position: relative;
+    z-index: 0; /* rimane sotto l'overlay del modal */
+}
+
+/* Leaflet genera elementi con z-index elevati; li abbiamiamo al contesto locale */
+#modal-dest-map .leaflet-control-container {
+    position: absolute;
+}
+
+/* Popup Leaflet nella mini-mappa: font più piccolo per non prendere troppo spazio */
+#modal-dest-map .leaflet-popup-content {
+    font-size: 0.8rem;
+    margin: 0.4rem 0.6rem;
+}
+
+/* Badge distanza calcolata: animazione di entrata */
+#modal-distanza-badge {
+    animation: fadeInBadge 0.3s ease-out;
+    display: flex; /* flex di default (il display:none è inline-style) */
+}
+
+@keyframes fadeInBadge {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Campo ricerca destinazione: stile coerente con gli altri input */
+#modal-dest-input {
+    border-radius: var(--border-radius, 8px);
+    border: 1px solid var(--border-color, #e2e8f0);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+    width: 100%;
+    background: var(--input-bg, #f8fafc);
+    color: var(--text-primary, #1e293b);
+    transition: border-color 0.2s;
+}
+
+#modal-dest-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
