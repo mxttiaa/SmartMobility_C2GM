@@ -16,13 +16,9 @@ import java.util.regex.Pattern;
 public class NoleggioController implements HttpHandler {
 
     private NoleggioManager noleggioManager;
-    private MezzoManager mezzoManager;
-    private TariffaManager tariffaManager;
 
     public NoleggioController() {
         this.noleggioManager = new NoleggioManager();
-        this.mezzoManager = new MezzoManager();
-        this.tariffaManager = new TariffaManager();
     }
 
     @Override
