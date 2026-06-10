@@ -42,6 +42,18 @@ Utente – UT.05
 
 ---
 
+Utente – UT.06 
+
+**COME** utente 
+
+**DEVO POTER** visualizzare una stima del costo del noleggio prima di confermarlo 
+
+**PER CONSEGUIRE** la decisione se procedere o meno con la prenotazione. 
+
+*descrizione:* Calcolo preventivo della spesa basato sulle tariffe correnti, fornito prima dell'attivazione del noleggio per supportare l'utente nella scelta economica. 
+
+---
+
 Operatore del Servizio – OP.01  
 **COME** operatore  
 **DEVO POTER** visualizzare la distribuzione dei mezzi  

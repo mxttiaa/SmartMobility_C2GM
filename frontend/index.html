@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Mobility - Zootropolis</title>
     <meta name="description" content="Accedi o registrati per utilizzare i servizi di Smart Mobility.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -16,7 +18,20 @@
 
 <body>
     <div class="container">
-        <h1>Smart Mobility</h1>
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; width: 100%;">
+            <!-- Div vuoto a sinistra per bilanciare la larghezza dell'icona a destra -->
+            <div style="width: 48px; visibility: hidden;"></div>
+            
+            <h1 style="margin-bottom: 0; text-align: center;">Smart Mobility</h1>
+            
+            <div style="width: 48px; display: flex; justify-content: flex-end;">
+                <button id="btn-apri-assistenza" style="display: none; background: none; border: none; cursor: pointer; align-items: center; justify-content: center; padding: 0.5rem; margin: 0;" title="Assistenza Clienti">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--primary-color)" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
 
         <div id="auth-view" class="forms-wrapper">
             <!-- Form Registrazione (UC-01) -->
@@ -69,51 +84,6 @@
 
         <!-- Vista successiva all'accesso -->
         <div id="dashboard-view" class="dashboard-wrapper hidden">
-            <section class="form-section">
-                <h2>Dashboard Utente</h2>
-                <p style="margin-bottom: 1.5rem; text-align: center; color: var(--text-muted);">Gestisci qui i tuoi
-                    metodi di pagamento e i servizi.</p>
-
-                <h3>Aggiungi Metodo di Pagamento</h3>
-                <form id="payment-form">
-                    <div class="input-group">
-                        <label for="pay-tipo">Tipo Pagamento</label>
-                        <select id="pay-tipo" name="tipoPagamento" required>
-                            <option value="Carta di Credito">Carta di Credito</option>
-                            <option value="Carta di Debito">Carta di Debito</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="pay-intestatario">Intestatario</label>
-                        <input type="text" id="pay-intestatario" name="intestatario" required
-                            placeholder="Nome e Cognome">
-                    </div>
-                    <div class="input-group">
-                        <label for="pay-numero">Numero Carta</label>
-                        <input type="text" id="pay-numero" name="numeroCarta" required placeholder="16 cifre"
-                            minlength="13" maxlength="19" pattern="\d{13,19}" title="Solo numeri, da 13 a 19 cifre"
-                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                    </div>
-                    <div class="input-group">
-                        <label for="pay-scadenza">Data Scadenza</label>
-                        <input type="text" id="pay-scadenza" name="dataScadenza" required placeholder="MM/YY"
-                            pattern="(0[1-9]|1[0-2])\/\d{2}">
-                    </div>
-                    <div class="input-group">
-                        <label for="pay-cvv">CVV</label>
-                        <input type="text" id="pay-cvv" name="cvv" required placeholder="3 cifre" minlength="3"
-                            maxlength="4" pattern="\d{3,4}" title="Solo numeri, 3 o 4 cifre"
-                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                    </div>
-                    <!-- Simulo id utente hardcoded dato che non c'è sessione attiva -->
-                    <input type="hidden" id="pay-idutente" name="idUtente" value="1">
-
-                    <button type="submit">Salva Metodo</button>
-                    <div id="payment-message" class="message"></div>
-                </form>
-            </section>
-
-
 
             <!-- Sezione Mappa (UC-06) -->
             <section class="form-section" id="mappa-section">
@@ -141,43 +111,7 @@
                 </div>
             </section>
 
-            <!-- Sezione Assistenza (UC-05) -->
-            <section class="form-section" id="assistenza-section">
-                <h2>Richiesta Assistenza</h2>
 
-                <div id="formContainer">
-                    <p style="margin-bottom: 1.5rem; text-align: center; color: var(--text-muted);">Descrivi nel
-                        dettaglio il problema riscontrato e un nostro operatore ti assisterà.</p>
-                    <form id="assistenza-form">
-                        <div class="input-group">
-                            <textarea id="descrizioneProblema" name="descrizioneProblema"
-                                placeholder="Non riesco a sbloccare il veicolo..." required
-                                style="width: 100%; height: 100px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
-                        </div>
-                        <button type="submit" id="btn-invia-assistenza">Invia Richiesta</button>
-                        <div id="assistenza-message" class="message"></div>
-                    </form>
-                </div>
-
-                <div id="chatContainer" style="display: none; margin-top: 20px;">
-                    <div class="chat-box"
-                        style="border: 1px solid var(--border-color); border-radius: 8px; background-color: #fafafa; display: flex; flex-direction: column; overflow: hidden;">
-                        <div class="chat-header"
-                            style="background-color: var(--primary-color); color: white; padding: 15px; font-weight: bold; text-align: center;">
-                            Assistenza Clienti</div>
-                        <div class="chat-body" id="chatBody"
-                            style="padding: 20px; height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
-                            <!-- I messaggi saranno aggiunti qui dal JS -->
-                        </div>
-                        <div class="chat-footer"
-                            style="padding: 15px; background-color: #fff; border-top: 1px solid var(--border-color);">
-                            <button type="button" id="btn-chiudi-chat"
-                                style="background-color: var(--text-muted); width: 100%; padding: 0.85rem; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">Chiudi
-                                chat</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
         </div>
 
         <!-- Vista Operatore (UC-08) -->
@@ -190,6 +124,217 @@
                     style="height: 500px; width: 100%; border-radius: var(--border-radius); border: 1px solid var(--border-color); z-index: 1;">
                 </div>
             </section>
+        </div>
+    </div>
+
+    <!-- ========================================
+         MODAL PRENOTAZIONE / STIMA COSTO (UC-09)
+         ======================================== -->
+    <div id="modal-prenotazione" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-box">
+            <button class="modal-close" id="modal-close-btn" aria-label="Chiudi">&times;</button>
+
+            <div class="modal-header">
+                <h2 id="modal-title">🛴 Prenota Mezzo</h2>
+                <span class="modal-mezzo-badge" id="modal-mezzo-label">ID: — | Tipo: —</span>
+            </div>
+
+            <!-- STEP 1: Inserisci parametri -->
+            <div id="modal-step-form">
+                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;">
+                    Scegli la <strong>destinazione</strong> sulla mappa (o scrivila).
+                    Distanza e tempo di percorrenza verranno calcolati automaticamente
+                    in base alla velocità media del mezzo.<br>
+                    <strong>Limiti:</strong> max 120 min · max 30 km.
+                </p>
+                <form id="modal-stima-form" novalidate>
+
+                    <!-- Destinazione: ricerca testuale -->
+                    <div class="input-group">
+                        <label for="modal-dest-input">Destinazione
+                            <span style="color:var(--text-muted);font-weight:400">(opzionale — clicca la mappa o
+                                scrivi)</span>
+                        </label>
+                        <div style="display:flex;gap:0.5rem;">
+                            <input type="text" id="modal-dest-input" placeholder="Es. Stazione Centrale, Bari"
+                                style="flex:1;" autocomplete="off">
+                            <button type="button" id="btn-cerca-dest"
+                                style="width:auto;padding:0.6rem 1rem;font-size:0.85rem;white-space:nowrap;margin-top:0;">
+                                🔍 Cerca
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mini-mappa destinazione -->
+                    <div style="margin-bottom:1rem;">
+                        <div id="modal-dest-map"
+                            style="height:180px;border-radius:8px;border:1px solid var(--border-color);overflow:hidden;position:relative;">
+                        </div>
+                        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;text-align:center;">
+                            📍 Clicca sulla mappa per scegliere la destinazione
+                        </p>
+                    </div>
+
+                    <!-- Badge riepilogo: distanza + durata calcolate (sola lettura) -->
+                    <div id="modal-distanza-badge" style="display:none;margin-bottom:1rem;
+                        background:linear-gradient(135deg,#eff6ff,#f0fdf4);
+                        border:1px solid #bfdbfe;border-radius:10px;
+                        padding:0.8rem 1rem;">
+                        <div style="display:flex;gap:1.2rem;">
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <span style="font-size:1.3rem;">📏</span>
+                                <div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);font-weight:500;">Distanza</div>
+                                    <div id="modal-distanza-valore"
+                                        style="font-size:1.1rem;font-weight:800;color:var(--primary-color);">—</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <span style="font-size:1.3rem;">⏱️</span>
+                                <div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);font-weight:500;">Tempo stimato</div>
+                                    <div id="modal-durata-valore"
+                                        style="font-size:1.1rem;font-weight:800;color:#059669;">—</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <span style="font-size:1.3rem;">🚀</span>
+                                <div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);font-weight:500;">Vel. media</div>
+                                    <div id="modal-velocita-valore"
+                                        style="font-size:1.1rem;font-weight:800;color:#7c3aed;">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="modal-form-error" class="message error" style="display:none;"></div>
+                    <div class="modal-loader" id="modal-loader">
+                        <span class="spinner"></span> Calcolo in corso…
+                    </div>
+                    <button type="submit" id="btn-calcola-modal">Calcola stima →</button>
+                </form>
+            </div>
+
+            <!-- STEP 2: Risultato stima -->
+            <div id="modal-step-result">
+                <div class="stima-result-box">
+                    <div class="stima-importo" id="modal-importo">—</div>
+                    <div class="stima-descrizione" id="modal-descrizione"></div>
+                </div>
+                <div id="modal-result-error" class="message error" style="display:none;"></div>
+                <!-- Avviso metodo di pagamento mancante (mostrato solo se necessario) -->
+                <div id="modal-nopay-warning" class="message error" style="display:none; text-align:left;">
+                    ⚠️ <strong>Nessun metodo di pagamento salvato.</strong><br>
+                    Per procedere con la prenotazione devi prima
+                    <a href="javascript:void(0)" id="link-vai-pagamento"
+                        style="color:var(--primary-color);font-weight:600;text-decoration:underline;">
+                        aggiungere una carta
+                    </a>.
+                </div>
+                <div class="modal-btn-row">
+                    <button class="btn-secondary" id="btn-modifica-stima">← Modifica</button>
+                    <button class="btn-success" id="btn-conferma-prenotazione">✓ Conferma prenotazione</button>
+                </div>
+            </div>
+
+            <div id="modal-payment-container" style="display:none; margin-top: 1rem; text-align: left;">
+                <h3 style="margin-bottom: 1rem; text-align: center;">Aggiungi Metodo di Pagamento</h3>
+                <form id="payment-form">
+                    <div class="input-group">
+                        <label for="pay-tipo">Tipo Pagamento</label>
+                        <select id="pay-tipo" name="tipoPagamento" required>
+                            <option value="Carta di Credito">Carta di Credito</option>
+                            <option value="Carta di Debito">Carta di Debito</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="pay-intestatario">Intestatario</label>
+                        <input type="text" id="pay-intestatario" name="intestatario" required placeholder="Nome e Cognome">
+                    </div>
+                    <div class="input-group">
+                        <label for="pay-numero">Numero Carta</label>
+                        <input type="text" id="pay-numero" name="numeroCarta" required placeholder="16 cifre"
+                            minlength="13" maxlength="19" pattern="\d{13,19}" title="Solo numeri, da 13 a 19 cifre"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="input-group" style="flex: 1;">
+                            <label for="pay-scadenza">Data Scadenza</label>
+                            <input type="text" id="pay-scadenza" name="dataScadenza" required placeholder="MM/YY"
+                                pattern="(0[1-9]|1[0-2])\/\d{2}">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label for="pay-cvv">CVV</label>
+                            <input type="text" id="pay-cvv" name="cvv" required placeholder="3 cifre" minlength="3"
+                                maxlength="4" pattern="\d{3,4}" title="Solo numeri, 3 o 4 cifre"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        </div>
+                    </div>
+                    <!-- Simulo id utente hardcoded dato che non c'è sessione attiva -->
+                    <input type="hidden" id="pay-idutente" name="idUtente" value="1">
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button type="button" class="btn-secondary" id="btn-annulla-pagamento" style="flex: 1;">Annulla</button>
+                        <button type="submit" style="flex: 2;">Salva Metodo</button>
+                    </div>
+                    <div id="payment-message" class="message"></div>
+                </form>
+            </div>
+
+            <!-- STEP 3: Prenotazione confermata -->
+            <div id="modal-step-confirm">
+                <div class="conferma-icon">🎉</div>
+                <div class="conferma-title">Prenotazione confermata!</div>
+                <div class="conferma-sub" id="modal-conferma-sub">Il mezzo è stato prenotato con successo.</div>
+                <!-- TODO: al click verrà chiamata l'API /api/noleggio/avvia quando disponibile -->
+                <button id="btn-chiudi-modal-confirm">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         MODAL ASSISTENZA (UC-05)
+         ======================================== -->
+    <div id="modal-assistenza" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-assistenza-title">
+        <div class="modal-box">
+            <button class="modal-close" id="modal-close-assistenza" aria-label="Chiudi">&times;</button>
+            <div class="modal-header">
+                <h2 id="modal-assistenza-title">💬 Assistenza Clienti</h2>
+            </div>
+            
+            <div id="formContainer">
+                <p style="margin-bottom: 1.5rem; text-align: center; color: var(--text-muted);">Descrivi nel
+                    dettaglio il problema riscontrato e un nostro operatore ti assisterà.</p>
+                <form id="assistenza-form">
+                    <div class="input-group">
+                        <textarea id="descrizioneProblema" name="descrizioneProblema"
+                            placeholder="Non riesco a sbloccare il veicolo..." required
+                            style="width: 100%; height: 100px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                    <button type="submit" id="btn-invia-assistenza">Invia Richiesta</button>
+                    <div id="assistenza-message" class="message"></div>
+                </form>
+            </div>
+
+            <div id="chatContainer" style="display: none; margin-top: 20px;">
+                <div class="chat-box"
+                    style="border: 1px solid var(--border-color); border-radius: 8px; background-color: #fafafa; display: flex; flex-direction: column; overflow: hidden;">
+                    <div class="chat-header"
+                        style="background-color: var(--primary-color); color: white; padding: 15px; font-weight: bold; text-align: center;">
+                        Operatore in linea</div>
+                    <div class="chat-body" id="chatBody"
+                        style="padding: 20px; height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+                        <!-- I messaggi saranno aggiunti qui dal JS -->
+                    </div>
+                    <div class="chat-footer"
+                        style="padding: 15px; background-color: #fff; border-top: 1px solid var(--border-color);">
+                        <button type="button" id="btn-chiudi-chat"
+                            style="background-color: var(--text-muted); width: 100%; padding: 0.85rem; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">Chiudi
+                            chat</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

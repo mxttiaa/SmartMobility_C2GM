@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -61,5 +62,27 @@ public class MetodoPagamentoDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * Conta quanti metodi di pagamento attivi ha un dato utente.
+     *
+     * @param idUtente L'ID dell'utente.
+     * @return Il numero di metodi trovati (>= 0), oppure -1 in caso di errore.
+     */
+    public int contaMetodiPagamento(int idUtente) {
+        String sql = "SELECT COUNT(*) FROM MetodoPagamento WHERE idUtente = ? AND statoAttivo = TRUE";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idUtente);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1; // errore DB
     }
 }
