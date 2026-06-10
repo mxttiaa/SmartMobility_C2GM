@@ -27,6 +27,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     };
 
+    // Controllo visibilità assistenza all'avvio
+    const btnApriAssistenza = document.getElementById('btn-apri-assistenza');
+    if (btnApriAssistenza) {
+        if (localStorage.getItem('token')) {
+            btnApriAssistenza.style.display = 'flex';
+        } else {
+            btnApriAssistenza.style.display = 'none';
+        }
+    }
+
     /**
      * Gestione Registrazione (UC-01)
      */
@@ -99,6 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     showMessage(loginMessage, true, 'Accesso effettuato con successo!');
                     loginForm.reset();
 
+                    if (btnApriAssistenza) {
+                        btnApriAssistenza.style.display = 'flex';
+                    }
+
                     // Transizione alla scheda successiva
                     setTimeout(() => {
                         document.getElementById('auth-view').classList.add('hidden');
@@ -148,6 +162,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Risposta 2xx
                     showMessage(paymentMessage, true, 'Metodo di pagamento salvato con successo!');
                     paymentForm.reset(); // Svuota i campi
+
+                    // Integrazione nel modal di prenotazione
+                    setTimeout(() => {
+                        const paymentContainer = document.getElementById('modal-payment-container');
+                        if (paymentContainer && paymentContainer.style.display === 'block') {
+                            paymentContainer.style.display = 'none';
+                            const stimaResultBox = document.querySelector('.stima-result-box');
+                            const modalBtnRow = document.querySelector('.modal-btn-row');
+                            if (stimaResultBox) stimaResultBox.style.display = 'block';
+                            if (modalBtnRow) modalBtnRow.style.display = 'flex';
+
+                            const nopayWarning = document.getElementById('modal-nopay-warning');
+                            if (nopayWarning) nopayWarning.style.display = 'none';
+
+                            const btnConferma = document.getElementById('btn-conferma-prenotazione');
+                            if (btnConferma) btnConferma.click();
+                        }
+                    }, 1500);
                 } else {
                     // Risposta di errore
                     let errorMessage = 'Operazione fallita.';
@@ -178,6 +210,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatContainer = document.getElementById('chatContainer');
     const chatBody = document.getElementById('chatBody');
     const btnChiudiChat = document.getElementById('btn-chiudi-chat');
+
+    // Apertura/Chiusura Modal Assistenza
+    const modalAssistenza = document.getElementById('modal-assistenza');
+    const modalCloseAssistenza = document.getElementById('modal-close-assistenza');
+
+    if (btnApriAssistenza) {
+        btnApriAssistenza.addEventListener('click', () => {
+            if (modalAssistenza) modalAssistenza.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            if (formContainer) formContainer.style.display = 'block';
+            if (chatContainer) chatContainer.style.display = 'none';
+            if (assistenzaForm) assistenzaForm.reset();
+        });
+    }
+
+    if (modalCloseAssistenza) {
+        modalCloseAssistenza.addEventListener('click', () => {
+            if (modalAssistenza) modalAssistenza.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+
+    if (modalAssistenza) {
+        modalAssistenza.addEventListener('click', (e) => {
+            if (e.target === modalAssistenza) {
+                modalAssistenza.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
 
     if (assistenzaForm) {
         assistenzaForm.addEventListener('submit', async (e) => {
@@ -382,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     data-lat="${m.latitudine}"
                     data-lon="${m.longitudine}"
                     style="margin-top:10px;background:#2563eb;color:white;border:none;border-radius:6px;padding:0.5rem 1rem;cursor:pointer;font-size:0.9rem;font-weight:600;width:100%;"
-                >🛔 Prenota</button>
+                >Prenota</button>
             `;
             L.marker([m.latitudine, m.longitudine]).addTo(markersLayer)
                 .bindPopup(popupContent);
@@ -455,14 +517,14 @@ document.addEventListener('DOMContentLoaded', () => {
      * stradale urbana rispetto alla linea d'aria.
      */
     function distanzaHaversineKm(lat1, lon1, lat2, lon2) {
-        const R      = 6371;
-        const dLat   = (lat2 - lat1) * Math.PI / 180;
-        const dLon   = (lon2 - lon1) * Math.PI / 180;
-        const a      = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                     + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
-                     * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c      = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const linea  = R * c;
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+            + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
+            * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const linea = R * c;
         return Math.round(linea * 1.30 * 100) / 100; // fattore tortuosità 1.30
     }
 
@@ -477,31 +539,31 @@ document.addEventListener('DOMContentLoaded', () => {
         'scooter elettrico': 25
     };
 
-    const modalOverlay     = document.getElementById('modal-prenotazione');
-    const modalCloseBtn    = document.getElementById('modal-close-btn');
-    const modalMezzoLabel  = document.getElementById('modal-mezzo-label');
-    const modalStepForm    = document.getElementById('modal-step-form');
-    const modalStepResult  = document.getElementById('modal-step-result');
+    const modalOverlay = document.getElementById('modal-prenotazione');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalMezzoLabel = document.getElementById('modal-mezzo-label');
+    const modalStepForm = document.getElementById('modal-step-form');
+    const modalStepResult = document.getElementById('modal-step-result');
     const modalStepConfirm = document.getElementById('modal-step-confirm');
-    const modalStimaForm   = document.getElementById('modal-stima-form');
-    const modalFormError   = document.getElementById('modal-form-error');
-    const modalLoader      = document.getElementById('modal-loader');
-    const modalImporto     = document.getElementById('modal-importo');
+    const modalStimaForm = document.getElementById('modal-stima-form');
+    const modalFormError = document.getElementById('modal-form-error');
+    const modalLoader = document.getElementById('modal-loader');
+    const modalImporto = document.getElementById('modal-importo');
     const modalDescrizione = document.getElementById('modal-descrizione');
     const btnModificaStima = document.getElementById('btn-modifica-stima');
-    const btnConferma      = document.getElementById('btn-conferma-prenotazione');
+    const btnConferma = document.getElementById('btn-conferma-prenotazione');
     const modalConfermaSub = document.getElementById('modal-conferma-sub');
     const btnChiudiConfirm = document.getElementById('btn-chiudi-modal-confirm');
 
     // Stato corrente del modal
-    let modalIdMezzo    = null;
-    let modalTipologia  = null;
+    let modalIdMezzo = null;
+    let modalTipologia = null;
     /** Coordinate lat/lon del mezzo selezionato (sorgente della distanza). */
     let mezzoLat = null;
     let mezzoLon = null;
     /** Coordinate lat/lon della destinazione scelta dall'utente. */
-    let destLat  = null;
-    let destLon  = null;
+    let destLat = null;
+    let destLon = null;
     /** Distanza calcolata in km (null = nessuna destinazione selezionata). */
     let distanzaCalcolata = null;
     /** Durata calcolata in minuti (null = nessuna destinazione selezionata). */
@@ -512,11 +574,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let destMarker = null;
 
     // Riferimenti DOM specifici della destinazione
-    const destInput           = document.getElementById('modal-dest-input');
-    const btnCercaDest        = document.getElementById('btn-cerca-dest');
-    const distanzaBadge       = document.getElementById('modal-distanza-badge');
-    const distanzaValore      = document.getElementById('modal-distanza-valore');
-    const modalDurataValore   = document.getElementById('modal-durata-valore');
+    const destInput = document.getElementById('modal-dest-input');
+    const btnCercaDest = document.getElementById('btn-cerca-dest');
+    const distanzaBadge = document.getElementById('modal-distanza-badge');
+    const distanzaValore = document.getElementById('modal-distanza-valore');
+    const modalDurataValore = document.getElementById('modal-durata-valore');
     const modalVelocitaValore = document.getElementById('modal-velocita-valore');
 
     /**
@@ -538,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         durataCalcolata = Math.max(1, Math.ceil((km / vMedia) * 60));
 
         distanzaBadge.style.display = 'flex';
-        distanzaValore.textContent  = `${km.toFixed(2)} km`;
+        distanzaValore.textContent = `${km.toFixed(2)} km`;
         modalDurataValore.textContent = `${durataCalcolata} min`;
         if (modalVelocitaValore) modalVelocitaValore.textContent = `${vMedia} km/h`;
 
@@ -585,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Inizializza (o reinizializza) la mini-mappa della destinazione.
      */
     function apriModalPrenotazione(idMezzo, tipologia, latMezzo, lonMezzo) {
-        modalIdMezzo   = idMezzo;
+        modalIdMezzo = idMezzo;
         modalTipologia = tipologia;
         mezzoLat = latMezzo != null && !isNaN(latMezzo) ? latMezzo : null;
         mezzoLon = lonMezzo != null && !isNaN(lonMezzo) ? lonMezzo : null;
@@ -632,7 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
                         iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
                     })
-                }).addTo(miniMappa).bindPopup(`🛔 Mezzo ${idMezzo}`);
+                }).addTo(miniMappa).bindPopup(`Mezzo ${idMezzo}`);
             }
 
             // Click sulla mappa → imposta destinazione
@@ -660,8 +722,8 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {'form'|'result'|'confirm'} step
      */
     function goToModalStep(step) {
-        modalStepForm.style.display    = step === 'form'    ? 'block' : 'none';
-        modalStepResult.style.display  = step === 'result'  ? 'block' : 'none';
+        modalStepForm.style.display = step === 'form' ? 'block' : 'none';
+        modalStepResult.style.display = step === 'result' ? 'block' : 'none';
         modalStepConfirm.style.display = step === 'confirm' ? 'block' : 'none';
     }
 
@@ -703,10 +765,10 @@ document.addEventListener('DOMContentLoaded', () => {
         mapContainer.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-prenota-mezzo');
             if (!btn) return;
-            const idMezzo   = parseInt(btn.dataset.id, 10);
+            const idMezzo = parseInt(btn.dataset.id, 10);
             const tipologia = btn.dataset.tipo || 'Mezzo';
-            const latMezzo  = parseFloat(btn.dataset.lat);
-            const lonMezzo  = parseFloat(btn.dataset.lon);
+            const latMezzo = parseFloat(btn.dataset.lat);
+            const lonMezzo = parseFloat(btn.dataset.lon);
             apriModalPrenotazione(idMezzo, tipologia, latMezzo, lonMezzo);
         });
     }
@@ -761,7 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Entrambi calcolati automaticamente in base alla destinazione
             const distanza = distanzaCalcolata !== null ? distanzaCalcolata : 0;
-            const durata   = durataCalcolata !== null ? durataCalcolata : 0;
+            const durata = durataCalcolata !== null ? durataCalcolata : 0;
 
             // Validazione: destinazione obbligatoria (può essere a distanza 0 se si seleziona lo stesso posto, ma deve essere stata selezionata)
             if (distanzaCalcolata === null || durataCalcolata === null) {
@@ -779,9 +841,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const payload = {
-                    idMezzo:      modalIdMezzo,
+                    idMezzo: modalIdMezzo,
                     durataMinuti: durata,
-                    distanzaKm:   distanza
+                    distanzaKm: distanza
                 };
 
                 const response = await fetch('http://localhost:8080/api/noleggio/stima', {
@@ -801,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok) {
                     const result = await response.json();
-                    modalImporto.textContent     = `€ ${parseFloat(result.importo).toFixed(2)}`;
+                    modalImporto.textContent = `€ ${parseFloat(result.importo).toFixed(2)}`;
                     modalDescrizione.textContent = result.descrizione || '';
                     goToModalStep('result');
                 } else {
@@ -908,6 +970,36 @@ document.addEventListener('DOMContentLoaded', () => {
         btnChiudiConfirm.addEventListener('click', chiudiModal);
     }
 
+    // --- Gestione Form Pagamento nel Modal ---
+    const linkVaiPagamento = document.getElementById('link-vai-pagamento');
+    const paymentContainer = document.getElementById('modal-payment-container');
+    const btnAnnullaPagamento = document.getElementById('btn-annulla-pagamento');
+
+    if (linkVaiPagamento) {
+        linkVaiPagamento.addEventListener('click', () => {
+            const stimaResultBox = document.querySelector('.stima-result-box');
+            const modalBtnRow = document.querySelector('.modal-btn-row');
+            const nopayWarning = document.getElementById('modal-nopay-warning');
+
+            if (stimaResultBox) stimaResultBox.style.display = 'none';
+            if (modalBtnRow) modalBtnRow.style.display = 'none';
+            if (nopayWarning) nopayWarning.style.display = 'none';
+            if (paymentContainer) paymentContainer.style.display = 'block';
+        });
+    }
+
+    if (btnAnnullaPagamento) {
+        btnAnnullaPagamento.addEventListener('click', () => {
+            const stimaResultBox = document.querySelector('.stima-result-box');
+            const modalBtnRow = document.querySelector('.modal-btn-row');
+            const nopayWarning = document.getElementById('modal-nopay-warning');
+
+            if (paymentContainer) paymentContainer.style.display = 'none';
+            if (stimaResultBox) stimaResultBox.style.display = 'block';
+            if (modalBtnRow) modalBtnRow.style.display = 'flex';
+            if (nopayWarning) nopayWarning.style.display = 'block';
+            if (paymentForm) paymentForm.reset();
+        });
+    }
+
 });
-
-
