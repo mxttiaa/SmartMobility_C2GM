@@ -79,16 +79,23 @@ Una volta che la Pull Request è stata approvata e unita (merged) nel progetto p
 
 ---
 
-## 🧪 5. Esecuzione dei Test
-Per testare la logica di business (es. i Manager) senza l'uso di framework esterni, è possibile utilizzare le classi Java presenti nella cartella `test`.
+## 🧪 5. Esecuzione dei Test di Modulo e di Sistema
 
-**1. Compilare il progetto:**
-Aprire un terminale nella root del progetto ed eseguire:  
+**Comando di compilazione generale:**
 `javac -d bin -sourcepath backend/src/main/java -cp "lib/*" test/*.java`
 
-**2. Eseguire i test:**
-`java -cp "bin;lib/*" test.TestUserManager`  
+**Comandi per l'esecuzione dei test:**
 
-In caso di successo, un messaggio di conferma verrà visualizzato nel terminale; in caso contrario, verranno segnalate le eccezioni riscontrate.
+* **Test Gestione Account (Blocco 1):**
+  `java -cp "bin;lib/*" test.TestUserManager`
+
+* **Test Core Noleggio (Blocco 2):**
+  `java -cp "bin;lib/*" test.TestBookingManager`
+
+* **Test Amministrazione (Blocco 3):**
+  `java -cp "bin;lib/*" test.TestAdminManager`
+
+* **Test di Integrazione Completo (Ciclo di vita utente):**
+  `java -cp "bin;lib/*" test.TestSistema`
 
 ---
