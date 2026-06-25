@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Mobility - Prenota Veicolo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="index.html">Prenota Veicolo</a>
+        <a href="dashboard.html">Dashboard Operatore</a>
+    </nav>
+
+    <!-- Effetti di sfondo animati -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container">
+        <h1>Smart Mobility</h1>
+        <p class="subtitle">Prenota il tuo veicolo in un istante</p>
+
+        <div class="input-group">
+            <input type="email" id="email" placeholder=" " required autocomplete="off">
+            <label for="email">Indirizzo Email</label>
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="codiceVeicolo" placeholder=" " required autocomplete="off">
+            <label for="codiceVeicolo">Codice Veicolo (es. AUTO-001)</label>
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+        </div>
+
+        <button id="bookBtn" onclick="prenotaVeicolo()">
+            <span id="btnText">Prenota Ora</span>
+            <div id="btnLoader" class="loader"></div>
+        </button>
+
+        <div id="responseDiv"></div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // Estrae il parametro 'codice' dall'URL se presente
+            const urlParams = new URLSearchParams(window.location.search);
+            const codice = urlParams.get('codice');
+            
+            if (codice) {
+                const codiceInput = document.getElementById('codiceVeicolo');
+                codiceInput.value = codice;
+                codiceInput.readOnly = true;
+                
+                // Evidenzia visivamente che il campo è precompilato
+                codiceInput.style.backgroundColor = 'rgba(0, 255, 136, 0.05)';
+                codiceInput.style.borderColor = 'var(--primary)';
+            }
+        };
+
+        async function prenotaVeicolo() {
+            // Lettura valori dagli input
+            const email = document.getElementById('email').value.trim();
+            const codiceVeicolo = document.getElementById('codiceVeicolo').value.trim();
+            
+            // Elementi UI
+            const responseDiv = document.getElementById('responseDiv');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const button = document.getElementById('bookBtn');
+
+            // Reset UI stato precedente
+            responseDiv.className = '';
+            responseDiv.classList.remove('show');
+            
+            // Validazione base
+            if (!email || !codiceVeicolo) {
+                showResponse('error', 'Compila tutti i campi richiesti.');
+                return;
+            }
+
+            // Attivazione stato di caricamento (animazione bottone)
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'block';
+            button.disabled = true;
+
+            // Costruzione dell'oggetto JSON
+            const requestBody = {
+                email: email,
+                codiceVeicolo: codiceVeicolo
+            };
+
+            try {
+                // Richiesta fetch verso l'API Backend Java
+                const response = await fetch('http://localhost:8080/api/prenota', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                // Gestione della risposta
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    showResponse('success', `✔ ${data.message}`);
+                } else {
+                    showResponse('error', `✖ Errore: ${data.message || 'Prenotazione fallita'}`);
+                }
+            } catch (error) {
+                console.error('Errore nella fetch:', error);
+                showResponse('error', '✖ Errore di connessione. Il server è avviato?');
+            } finally {
+                // Ripristino del bottone
+                btnText.style.display = 'block';
+                btnLoader.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        // Funzione helper per le animazioni del banner di risposta
+        function showResponse(type, message) {
+            const responseDiv = document.getElementById('responseDiv');
+            responseDiv.textContent = message;
+            responseDiv.className = type; // Assegna classe 'success' o 'error'
+            
+            // Trigger reflow per forzare l'animazione CSS
+            void responseDiv.offsetWidth;
+            responseDiv.classList.add('show');
+        }
+    </script>
+</body>
+</html>

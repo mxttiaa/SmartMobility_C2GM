@@ -14,6 +14,9 @@ public class MainServer {
             // Creiamo un contesto per l'API di prenotazione
             server.createContext("/api/prenota", new BookingAPI());
             
+            // Creiamo un contesto per l'API dei veicoli
+            server.createContext("/api/veicoli", new VeicoloAPI());
+            
             server.setExecutor(null); // crea un executor di default
             server.start();
             

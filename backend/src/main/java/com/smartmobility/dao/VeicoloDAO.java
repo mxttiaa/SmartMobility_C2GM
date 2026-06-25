@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VeicoloDAO {
     
@@ -46,6 +48,44 @@ public class VeicoloDAO {
             System.err.println("Errore lettura veicolo: " + e.getMessage());
         }
         return null;
+    }
+
+    public List<Veicolo> readAll() {
+        List<Veicolo> lista = new ArrayList<>();
+        String sql = "SELECT * FROM veicolo";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+             
+            while (rs.next()) {
+                String tipo = rs.getString("tipo_veicolo");
+                Posizione pos = new Posizione(rs.getDouble("latitudine"), rs.getDouble("longitudine"));
+                float carica = rs.getFloat("livello_carica_residua");
+                float portata = rs.getFloat("portata_massima");
+                String codiceIdentificativo = rs.getString("codice_identificativo");
+                StatoVeicolo stato = StatoVeicolo.valueOf(rs.getString("stato_operativo"));
+                
+                Veicolo veicolo = null;
+                if ("AUTOMOBILE".equalsIgnoreCase(tipo)) {
+                    veicolo = new Automobile(codiceIdentificativo, carica, portata, pos, 
+                        rs.getString("targa"), rs.getInt("numero_posti"));
+                } else if ("MONOPATTINO".equalsIgnoreCase(tipo)) {
+                    veicolo = new Monopattino(codiceIdentificativo, carica, portata, pos, 
+                        rs.getInt("velocita_massima"));
+                } else if ("BICICLETTA".equalsIgnoreCase(tipo)) {
+                    veicolo = new Bicicletta(codiceIdentificativo, carica, portata, pos, 
+                        rs.getBoolean("pedalata_assistita"));
+                }
+                
+                if (veicolo != null) {
+                    veicolo.setStatoOperativo(stato);
+                    lista.add(veicolo);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Errore lettura veicoli: " + e.getMessage());
+        }
+        return lista;
     }
 
     public void updateStatoEPosizione(Veicolo veicolo) {
