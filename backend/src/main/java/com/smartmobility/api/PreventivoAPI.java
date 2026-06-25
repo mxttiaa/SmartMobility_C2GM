@@ -36,19 +36,20 @@ public class PreventivoAPI implements HttpHandler {
             try {
                 String query = exchange.getRequestURI().getQuery();
                 String codiceVeicolo = getQueryParam(query, "codiceVeicolo");
-                String durataStr = getQueryParam(query, "durata");
+                String latStr = getQueryParam(query, "lat");
+                String lonStr = getQueryParam(query, "lon");
 
-                if (codiceVeicolo == null || durataStr == null) {
-                    sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"Parametri codiceVeicolo e durata obbligatori\"}");
+                if (codiceVeicolo == null || latStr == null || lonStr == null) {
+                    sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"Parametri codiceVeicolo, lat e lon obbligatori\"}");
                     return;
                 }
 
-                int minutiStimati;
+                double destLat, destLon;
                 try {
-                    minutiStimati = Integer.parseInt(durataStr);
-                    if (minutiStimati <= 0) throw new NumberFormatException();
+                    destLat = Double.parseDouble(latStr);
+                    destLon = Double.parseDouble(lonStr);
                 } catch (NumberFormatException e) {
-                    sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"Durata stimata non valida\"}");
+                    sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"Coordinate non valide\"}");
                     return;
                 }
 
@@ -58,15 +59,49 @@ public class PreventivoAPI implements HttpHandler {
                     return;
                 }
 
-                // Calcolo preventivo utilizzando PricingManager
-                Tariffa tariffa = pricingManager.getTariffaPerVeicolo(veicolo);
-                double preventivo = pricingManager.calcolaPreventivo(tariffa, minutiStimati * 0.33f); // Simuliamo distanza basata sul tempo per usare l'API esistente o usiamo minuti
-                // Wait, PricingManager's calcolaPreventivo takes (Tariffa tariffa, float distanza).
-                // Let's assume 1 km = 3 minuti in media, so distanza = minutiStimati / 3.0f
-                float distanzaStimata = minutiStimati / 3.0f;
-                double preventivoCalcolato = pricingManager.calcolaPreventivo(tariffa, distanzaStimata);
+                // Calcolo distanza (Haversine formula in km)
+                double vLat = veicolo.getCoordinateAttuali().getLatitudine();
+                double vLon = veicolo.getCoordinateAttuali().getLongitudine();
+                
+                double earthRadius = 6371.0; // km
+                double dLat = Math.toRadians(destLat - vLat);
+                double dLon = Math.toRadians(destLon - vLon);
+                double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                           Math.cos(Math.toRadians(vLat)) * Math.cos(Math.toRadians(destLat)) *
+                           Math.sin(dLon/2) * Math.sin(dLon/2);
+                double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                double distanza = earthRadius * c;
 
-                sendResponse(exchange, 200, "{\"status\": \"success\", \"preventivo\": " + preventivoCalcolato + "}");
+                if (distanza < 0.1) distanza = 0.1; // Minimo 100 metri per evitare costi 0
+
+                // Dati veicolo (Velocità media in km/h, Costo al minuto in euro)
+                double V = 20.0;
+                double P_min = 0.20;
+                
+                if (veicolo instanceof com.smartmobility.model.Bicicletta) {
+                    V = 15.0;
+                    P_min = 0.12;
+                } else if (veicolo instanceof com.smartmobility.model.Monopattino) {
+                    V = 20.0;
+                    P_min = 0.20;
+                } else if (veicolo instanceof com.smartmobility.model.Automobile) {
+                    V = 25.0;
+                    P_min = 0.30;
+                }
+
+                // S = Costo di sblocco ($1.00 €)
+                double S = 1.00;
+                
+                // formula: C = 1.00 + (D / V * 60) * P_min
+                double minutiStimati = (distanza / V) * 60.0;
+                double preventivoCalcolato = S + (minutiStimati * P_min);
+
+                // Formatta json response
+                String jsonResponse = String.format(java.util.Locale.US,
+                    "{\"status\": \"success\", \"preventivo\": %.2f, \"distanza\": %.2f, \"minuti\": %d}",
+                    preventivoCalcolato, distanza, Math.round(minutiStimati));
+
+                sendResponse(exchange, 200, jsonResponse);
 
             } catch (Exception e) {
                 e.printStackTrace();
