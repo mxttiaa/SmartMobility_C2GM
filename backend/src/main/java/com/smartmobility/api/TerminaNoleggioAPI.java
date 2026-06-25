@@ -1,10 +1,6 @@
 package com.smartmobility.api;
 
-import com.smartmobility.dao.AccountDAO;
-import com.smartmobility.dao.VeicoloDAO;
 import com.smartmobility.manager.BookingManager;
-import com.smartmobility.model.Account;
-import com.smartmobility.model.Veicolo;
 import com.smartmobility.util.SessionManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -16,23 +12,18 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
-public class BookingAPI implements HttpHandler {
+public class TerminaNoleggioAPI implements HttpHandler {
 
     private BookingManager bookingManager;
-    private AccountDAO accountDAO;
-    private VeicoloDAO veicoloDAO;
     private String[] allowedRoles;
 
-    public BookingAPI(String... allowedRoles) {
+    public TerminaNoleggioAPI(String... allowedRoles) {
         this.bookingManager = new BookingManager();
-        this.accountDAO = new AccountDAO();
-        this.veicoloDAO = new VeicoloDAO();
         this.allowedRoles = allowedRoles;
     }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        // 1. Headers per supportare richieste dal frontend (CORS)
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         
         if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -52,7 +43,6 @@ public class BookingAPI implements HttpHandler {
             return;
         }
 
-        // Verifica ruolo
         boolean authorized = false;
         if (allowedRoles != null) {
             for (String role : allowedRoles) {
@@ -68,7 +58,6 @@ public class BookingAPI implements HttpHandler {
             return;
         }
 
-        // 2. Se il metodo è POST, leggi il corpo della richiesta
         if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
             try {
                 String requestBody;
@@ -77,7 +66,6 @@ public class BookingAPI implements HttpHandler {
                     requestBody = br.lines().collect(Collectors.joining("\n"));
                 }
 
-                // 3. Estrazione manuale e semplificata dal JSON
                 String email = extractJsonField(requestBody, "email");
                 String codiceVeicolo = extractJsonField(requestBody, "codiceVeicolo");
 
@@ -86,34 +74,21 @@ public class BookingAPI implements HttpHandler {
                     return;
                 }
 
-                // 4. Recuperiamo l'Account e il Veicolo tramite i DAO
-                Account account = accountDAO.readByEmail(email);
-                Veicolo veicolo = veicoloDAO.readByCodice(codiceVeicolo);
+                bookingManager.terminaNoleggio(email, codiceVeicolo);
 
-                if (account == null || veicolo == null) {
-                    sendResponse(exchange, 404, "{\"status\": \"error\", \"message\": \"Account o veicolo non trovato\"}");
-                    return;
-                }
-
-                // 5. Avvio del noleggio
-                bookingManager.avviaNoleggio(account, veicolo);
-
-                // 6. Invia la risposta JSON finale
-                sendResponse(exchange, 200, "{\"status\": \"success\", \"message\": \"Noleggio avviato\"}");
+                sendResponse(exchange, 200, "{\"status\": \"success\", \"message\": \"Noleggio terminato\"}");
 
             } catch (IllegalStateException e) {
                 sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"" + e.getMessage() + "\"}");
             } catch (Exception e) {
-                // 7. Gestisci le eccezioni restituendo HTTP 500
                 e.printStackTrace();
-                sendResponse(exchange, 500, "{\"status\": \"error\", \"message\": \"" + e.getMessage() + "\"}");
+                sendResponse(exchange, 500, "{\"status\": \"error\", \"message\": \"Errore interno del server\"}");
             }
         } else {
             sendResponse(exchange, 405, "{\"status\": \"error\", \"message\": \"Metodo non consentito\"}");
         }
     }
 
-    // Metodo helper per estrarre valori stringa dal JSON
     private String extractJsonField(String json, String field) {
         String searchStr = "\"" + field + "\"";
         int index = json.indexOf(searchStr);
@@ -131,7 +106,6 @@ public class BookingAPI implements HttpHandler {
         return json.substring(quote1 + 1, quote2);
     }
 
-    // Metodo helper per inviare la risposta HTTP
     private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         byte[] bytes = response.getBytes(StandardCharsets.UTF_8);

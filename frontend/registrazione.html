@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione - Smart Mobility</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body style="align-items: center; justify-content: center; height: 100vh; overflow-y: auto; padding: 20px;">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container" style="max-width: 420px; padding: 40px;">
+        <h1 style="font-size: 2rem; margin-bottom: 5px;">Crea il tuo Account</h1>
+        <p class="subtitle" style="margin-bottom: 30px;">Inizia a muoverti in modo smart</p>
+
+        <div id="errorBanner" style="display: none; padding: 12px; border-radius: 12px; background: rgba(255, 77, 109, 0.1); border: 1px solid rgba(255, 77, 109, 0.3); color: #ff4d6d; font-size: 14px; margin-bottom: 20px; text-align: center;"></div>
+
+        <div id="registrationForm">
+            <div class="input-group">
+                <input type="text" id="nome" placeholder=" " required>
+                <label for="nome">Nome</label>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="cognome" placeholder=" " required>
+                <label for="cognome">Cognome</label>
+            </div>
+
+            <div class="input-group">
+                <input type="email" id="email" placeholder=" " required autocomplete="email">
+                <label for="email">Email</label>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="password" placeholder=" " required>
+                <label for="password">Password (min 6 caratteri)</label>
+            </div>
+
+            <button id="registerBtn" onclick="eseguiRegistrazione()" style="width: 100%; margin-bottom: 15px;">
+                <span id="btnText">Registrati</span>
+                <div id="btnLoader" class="loader" style="display: none;"></div>
+            </button>
+        </div>
+
+        <div id="verificationForm" style="display: none;">
+            <p style="text-align: center; margin-bottom: 20px; color: var(--text-muted);">Abbiamo inviato un codice di verifica alla tua email. Inseriscilo qui sotto per attivare l'account.</p>
+            <div class="input-group">
+                <input type="text" id="codice" placeholder=" " required>
+                <label for="codice">Codice di Verifica</label>
+            </div>
+            
+            <button id="verifyBtn" onclick="eseguiVerifica()" style="width: 100%; margin-bottom: 15px;">
+                <span id="verifyBtnText">Verifica Account</span>
+                <div id="verifyBtnLoader" class="loader" style="display: none;"></div>
+            </button>
+        </div>
+
+        <p style="text-align: center; color: var(--text-muted); font-size: 14px;">
+            Hai gia' un account? <a href="login.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Accedi</a>
+        </p>
+    </div>
+
+    <script>
+        if (localStorage.getItem('authToken')) {
+            window.location.href = 'index.html';
+        }
+
+        async function eseguiRegistrazione() {
+            const nome = document.getElementById('nome').value.trim();
+            const cognome = document.getElementById('cognome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorBanner = document.getElementById('errorBanner');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const button = document.getElementById('registerBtn');
+
+            errorBanner.style.display = 'none';
+
+            if (!nome || !cognome || !email || !password) {
+                errorBanner.textContent = 'Tutti i campi sono obbligatori.';
+                errorBanner.style.display = 'block';
+                return;
+            }
+
+            if (password.length < 6) {
+                errorBanner.textContent = 'La password deve avere almeno 6 caratteri.';
+                errorBanner.style.display = 'block';
+                return;
+            }
+
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'block';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, cognome, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    // Nascondi form registrazione, mostra form verifica
+                    document.getElementById('registrationForm').style.display = 'none';
+                    document.getElementById('verificationForm').style.display = 'block';
+                    errorBanner.style.display = 'none';
+                } else {
+                    errorBanner.textContent = data.message || 'Errore nella registrazione.';
+                    errorBanner.style.display = 'block';
+                }
+            } catch (error) {
+                errorBanner.textContent = 'Impossibile connettersi al server.';
+                errorBanner.style.display = 'block';
+            } finally {
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        async function eseguiVerifica() {
+            const email = document.getElementById('email').value.trim();
+            const codice = document.getElementById('codice').value.trim();
+            const errorBanner = document.getElementById('errorBanner');
+            const btnText = document.getElementById('verifyBtnText');
+            const btnLoader = document.getElementById('verifyBtnLoader');
+            const button = document.getElementById('verifyBtn');
+
+            errorBanner.style.display = 'none';
+
+            if (!codice) {
+                errorBanner.textContent = 'Inserisci il codice di verifica.';
+                errorBanner.style.display = 'block';
+                return;
+            }
+
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'block';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, codice })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userRole', data.ruolo);
+                    localStorage.setItem('userName', data.nome);
+                    localStorage.setItem('userEmail', email);
+                    window.location.href = 'index.html';
+                } else {
+                    errorBanner.textContent = data.message || 'Codice non valido.';
+                    errorBanner.style.display = 'block';
+                }
+            } catch (error) {
+                errorBanner.textContent = 'Impossibile connettersi al server.';
+                errorBanner.style.display = 'block';
+            } finally {
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (document.getElementById('verificationForm').style.display === 'block') {
+                    eseguiVerifica();
+                } else {
+                    eseguiRegistrazione();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

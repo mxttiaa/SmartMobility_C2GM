@@ -14,15 +14,17 @@ import java.sql.Statement;
 public class AccountDAO {
 
     public void create(Account account) {
-        String sql = "INSERT INTO account (nome, cognome, email, saldo_crediti_bonus, stato) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO account (nome, cognome, email, password_hash, ruolo, saldo_crediti_bonus, stato) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
              
             pstmt.setString(1, account.getNome());
             pstmt.setString(2, account.getCognome());
             pstmt.setString(3, account.getEmail());
-            pstmt.setDouble(4, account.getSaldoCreditiBonus());
-            pstmt.setString(5, account.getStato().name());
+            pstmt.setString(4, account.getPasswordHash());
+            pstmt.setString(5, account.getRuolo());
+            pstmt.setDouble(6, account.getSaldoCreditiBonus());
+            pstmt.setString(7, account.getStato().name());
             
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -43,6 +45,8 @@ public class AccountDAO {
                         rs.getString("cognome"),
                         rs.getString("email")
                     );
+                    account.setPasswordHash(rs.getString("password_hash"));
+                    account.setRuolo(rs.getString("ruolo"));
                     account.setSaldoCreditiBonus(rs.getDouble("saldo_crediti_bonus"));
                     account.setStato(StatoAccount.valueOf(rs.getString("stato")));
                     return account;

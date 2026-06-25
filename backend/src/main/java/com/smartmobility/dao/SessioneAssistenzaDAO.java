@@ -56,4 +56,54 @@ public class SessioneAssistenzaDAO {
             System.err.println("Errore assegnazione operatore a sessione: " + e.getMessage());
         }
     }
+
+    public java.util.List<SessioneAssistenza> readByAccountEmail(String email) {
+        java.util.List<SessioneAssistenza> lista = new java.util.ArrayList<>();
+        String sql = "SELECT s.* FROM sessione_assistenza s " +
+                     "JOIN account a ON s.account_id = a.id " +
+                     "WHERE a.email = ? ORDER BY s.istante_avvio DESC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             
+             pstmt.setString(1, email);
+             try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                 while (rs.next()) {
+                     SessioneAssistenza s = new SessioneAssistenza(
+                         rs.getString("id_sessione"),
+                         rs.getString("categoria_problema"),
+                         rs.getString("dettagli_preliminari"),
+                         rs.getTimestamp("istante_avvio").toLocalDateTime()
+                     );
+                     s.setStato(com.smartmobility.model.StatoSessione.valueOf(rs.getString("stato")));
+                     lista.add(s);
+                 }
+             }
+        } catch (SQLException e) {
+            System.err.println("Errore lettura sessioni assistenza: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    public java.util.List<SessioneAssistenza> readAllPending() {
+        java.util.List<SessioneAssistenza> lista = new java.util.ArrayList<>();
+        String sql = "SELECT * FROM sessione_assistenza WHERE stato = 'IN_ATTESA' ORDER BY istante_avvio ASC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             java.sql.ResultSet rs = pstmt.executeQuery()) {
+             
+             while (rs.next()) {
+                 SessioneAssistenza s = new SessioneAssistenza(
+                     rs.getString("id_sessione"),
+                     rs.getString("categoria_problema"),
+                     rs.getString("dettagli_preliminari"),
+                     rs.getTimestamp("istante_avvio").toLocalDateTime()
+                 );
+                 s.setStato(com.smartmobility.model.StatoSessione.valueOf(rs.getString("stato")));
+                 lista.add(s);
+             }
+        } catch (SQLException e) {
+            System.err.println("Errore lettura sessioni in attesa: " + e.getMessage());
+        }
+        return lista;
+    }
 }

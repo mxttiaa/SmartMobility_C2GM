@@ -11,16 +11,15 @@ import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.stream.Collectors;
 
-public class VeicoloAPI implements HttpHandler {
+public class DettaglioVeicoloAPI implements HttpHandler {
 
     private VeicoloDAO veicoloDAO;
     private String[] allowedRoles;
 
-    public VeicoloAPI(String... allowedRoles) {
+    public DettaglioVeicoloAPI(String... allowedRoles) {
         this.veicoloDAO = new VeicoloDAO();
         this.allowedRoles = allowedRoles;
     }
@@ -63,31 +62,61 @@ public class VeicoloAPI implements HttpHandler {
 
         if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
             try {
-                List<Veicolo> veicoli = veicoloDAO.readAll();
-                
-                String jsonElements = veicoli.stream().map(v -> {
-                    String tipo = "Generico";
-                    if (v instanceof Automobile) {
-                        tipo = "Automobile";
-                    } else if (v instanceof Monopattino) {
-                        tipo = "Monopattino";
-                    } else if (v instanceof Bicicletta) {
-                        tipo = "Bicicletta";
+                // Estrarre il parametro codice dall'URL query string
+                String query = exchange.getRequestURI().getQuery();
+                String codice = null;
+                if (query != null) {
+                    for (String param : query.split("&")) {
+                        String[] pair = param.split("=");
+                        if (pair.length == 2 && "codice".equals(pair[0])) {
+                            codice = URLDecoder.decode(pair[1], "UTF-8");
+                        }
                     }
-                    
-                    return "{" +
-                        "\"codice\": \"" + v.getCodiceIdentificativo() + "\", " +
+                }
+
+                if (codice == null || codice.isEmpty()) {
+                    sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"Parametro codice mancante\"}");
+                    return;
+                }
+
+                Veicolo veicolo = veicoloDAO.readByCodice(codice);
+
+                if (veicolo == null) {
+                    sendResponse(exchange, 404, "{\"status\": \"error\", \"message\": \"Veicolo non trovato\"}");
+                    return;
+                }
+
+                String tipo = "Generico";
+                String specifiche = "";
+                
+                if (veicolo instanceof Automobile) {
+                    tipo = "Automobile";
+                    Automobile auto = (Automobile) veicolo;
+                    specifiche = "\"targa\": \"" + auto.getTarga() + "\", " +
+                                 "\"numeroPosti\": " + auto.getNumeroPosti() + ", ";
+                } else if (veicolo instanceof Monopattino) {
+                    tipo = "Monopattino";
+                    Monopattino mono = (Monopattino) veicolo;
+                    specifiche = "\"velocitaMassima\": " + mono.getVelocitaMassima() + ", ";
+                } else if (veicolo instanceof Bicicletta) {
+                    tipo = "Bicicletta";
+                    Bicicletta bici = (Bicicletta) veicolo;
+                    specifiche = "\"pedalataAssistita\": " + bici.isPedalataAssistita() + ", ";
+                }
+
+                String jsonResponse = "{" +
+                        "\"codice\": \"" + veicolo.getCodiceIdentificativo() + "\", " +
                         "\"modello\": \"" + tipo + "\", " +
-                        "\"stato\": \"" + v.getStatoOperativo().name() + "\", " +
-                        "\"latitudine\": " + v.getCoordinateAttuali().getLatitudine() + ", " +
-                        "\"longitudine\": " + v.getCoordinateAttuali().getLongitudine() + ", " +
-                        "\"livelloCarica\": " + v.getLivelloCaricaResidua() + ", " +
-                        "\"autonomiaStimata\": " + v.getAutonomiaStimata() + ", " +
+                        specifiche +
+                        "\"stato\": \"" + veicolo.getStatoOperativo().name() + "\", " +
+                        "\"latitudine\": " + veicolo.getCoordinateAttuali().getLatitudine() + ", " +
+                        "\"longitudine\": " + veicolo.getCoordinateAttuali().getLongitudine() + ", " +
+                        "\"portataMassima\": " + veicolo.getPortataMassima() + ", " +
+                        "\"livelloCarica\": " + veicolo.getLivelloCaricaResidua() + ", " +
+                        "\"autonomiaStimata\": " + veicolo.getAutonomiaStimata() + ", " +
                         "\"tipoVeicolo\": \"" + tipo + "\"" +
                         "}";
-                }).collect(Collectors.joining(", "));
-                
-                String jsonResponse = "[" + jsonElements + "]";
+
                 sendResponse(exchange, 200, jsonResponse);
 
             } catch (Exception e) {

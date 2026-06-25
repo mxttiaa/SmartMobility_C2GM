@@ -7,6 +7,7 @@
     <title>Smart Mobility - Storico Noleggi</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="AuthGuard.js"></script>
     <style>
         /* Overriding flex alignment for dashboard layout */
         body {
@@ -56,9 +57,10 @@
 
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="index.html">Prenota Veicolo</a>
-        <a href="dashboard.html">Dashboard Operatore</a>
-        <a href="storico.html">Storico Noleggi</a>
+        <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
+        <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
+        <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
     </nav>
 
     <div class="blob blob-1" style="top: -50px; left: -50px;"></div>
@@ -82,11 +84,12 @@
                         <th>Codice Veicolo</th>
                         <th>Data Inizio</th>
                         <th>Stato</th>
+                        <th>Azione</th>
                     </tr>
                 </thead>
                 <tbody id="storicoBody">
                     <tr>
-                        <td colspan="3" style="text-align: center; color: var(--text-muted);">Inserisci la tua email e
+                        <td colspan="4" style="text-align: center; color: var(--text-muted);">Inserisci la tua email e
                             clicca su "Cerca"</td>
                     </tr>
                 </tbody>
@@ -95,20 +98,31 @@
     </div>
 
     <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedEmail = localStorage.getItem('userEmail');
+            if (savedEmail) {
+                document.getElementById('emailSearch').value = savedEmail;
+                // Opzionale: carica automaticamente lo storico
+                // caricaStorico(); 
+            }
+        });
+
         async function caricaStorico() {
             const emailInput = document.getElementById('emailSearch');
             const email = emailInput.value.trim();
             const tbody = document.getElementById('storicoBody');
 
             if (!email) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #ff4d6d;">Per favore inserisci un\'email valida.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #ff4d6d;">Per favore inserisci un\'email valida.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);"><div class="loader" style="display: inline-block; border-top-color: var(--primary); width: 16px; height: 16px; margin-right: 10px; vertical-align: middle;"></div> Caricamento in corso...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);"><div class="loader" style="display: inline-block; border-top-color: var(--primary); width: 16px; height: 16px; margin-right: 10px; vertical-align: middle;"></div> Caricamento in corso...</td></tr>';
 
             try {
-                const response = await fetch('http://localhost:8080/api/storico?email=' + encodeURIComponent(email));
+                const response = await fetch('http://localhost:8080/api/storico?email=' + encodeURIComponent(email), {
+                    headers: window.getAuthHeaders()
+                });
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -117,7 +131,7 @@
                 const data = await response.json();
 
                 if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Nessun noleggio trovato per questa email.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Nessun noleggio trovato per questa email.</td></tr>';
                     return;
                 }
 
@@ -136,17 +150,49 @@
                         textColor = '#ffb800';
                     }
 
+                    let azioneHtml = '';
+                    if (item.stato === 'IN_CORSO' || item.stato === 'IN_PAUSA') {
+                        azioneHtml = `<button onclick="terminaNoleggio('${email}', '${item.codiceVeicolo}')" style="padding: 8px 15px; font-size: 12px; min-height: auto;">Termina Noleggio</button>`;
+                    }
+
                     tr.innerHTML = `
                         <td><strong>${item.codiceVeicolo}</strong></td>
                         <td>${item.dataInizio.replace('T', ' ').substring(0, 16)}</td>
                         <td><span class="badge" style="display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: ${badgeColor}; color: ${textColor};">${item.stato}</span></td>
+                        <td>${azioneHtml}</td>
                     `;
                     tbody.appendChild(tr);
                 });
 
             } catch (error) {
                 console.error('Errore nel recupero dello storico:', error);
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #ff4d6d;">Impossibile recuperare lo storico. Verifica che il server sia acceso.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #ff4d6d;">Impossibile recuperare lo storico. Verifica che il server sia acceso.</td></tr>';
+            }
+        }
+
+        async function terminaNoleggio(email, codiceVeicolo) {
+            if (!confirm(`Sei sicuro di voler terminare il noleggio per il veicolo ${codiceVeicolo}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8080/api/termina', {
+                    method: 'POST',
+                    headers: window.getAuthJsonHeaders(),
+                    body: JSON.stringify({ email: email, codiceVeicolo: codiceVeicolo })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    alert('Noleggio terminato con successo!');
+                    caricaStorico(); // Ricarica la tabella
+                } else {
+                    alert('Errore: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Errore durante la terminazione del noleggio:', error);
+                alert('Errore di connessione al server.');
             }
         }
     </script>

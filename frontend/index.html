@@ -6,14 +6,16 @@
     <title>Smart Mobility - Prenota Veicolo</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="AuthGuard.js"></script>
 </head>
 <body>
 
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="index.html">Prenota Veicolo</a>
-        <a href="dashboard.html">Dashboard Operatore</a>
-        <a href="storico.html">Storico Noleggi</a>
+        <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
+        <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
+        <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
     </nav>
 
     <!-- Effetti di sfondo animati -->
@@ -103,16 +105,17 @@
                 // Richiesta fetch verso l'API Backend Java
                 const response = await fetch('http://localhost:8080/api/prenota', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: getAuthJsonHeaders(),
                     body: JSON.stringify(requestBody)
                 });
 
                 // Gestione della risposta
                 const data = await response.json();
 
-                if (response.ok && data.status === 'success') {
+                if (!response.ok) {
+                    // Gestione esplicita di errori 400/500 provenienti dal backend
+                    showResponse('error', `✖ Errore: ${data.message || 'Veicolo non disponibile o operazione fallita'}`);
+                } else if (data.status === 'success') {
                     showResponse('success', `✔ ${data.message}`);
                 } else {
                     showResponse('error', `✖ Errore: ${data.message || 'Prenotazione fallita'}`);

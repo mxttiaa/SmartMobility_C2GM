@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Ticket - Smart Mobility (Operatore)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="AuthGuard.js"></script>
+    <style>
+        body {
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            gap: 30px;
+        }
+
+        .ticket-card {
+            background: rgba(18, 18, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .ticket-header h3 {
+            margin: 0;
+            color: var(--primary);
+        }
+
+        .ticket-details p {
+            margin: 5px 0;
+            font-size: 15px;
+            color: var(--text-muted);
+        }
+
+        .ticket-details strong {
+            color: white;
+        }
+
+        .ticket-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .ticket-actions button {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        .btn-chiudi {
+            background: transparent;
+            border: 1px solid rgba(255, 77, 109, 0.5);
+            color: #ff4d6d;
+        }
+
+        .btn-chiudi:hover {
+            background: rgba(255, 77, 109, 0.1);
+            border-color: #ff4d6d;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
+        <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
+        <a href="gestione_ticket.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Ticket</a>
+        <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
+    </nav>
+
+    <div class="blob blob-1" style="top: -50px; left: -50px;"></div>
+    <div class="blob blob-2" style="bottom: auto; top: 200px; right: -50px;"></div>
+
+    <div class="dashboard-container">
+        
+        <div class="dashboard-title" style="text-align: center;">
+            <h1>Coda Ticket di Assistenza</h1>
+            <p class="subtitle">Gestisci le richieste in attesa</p>
+        </div>
+
+        <div id="ticketsContainer">
+            <p style="text-align: center; color: var(--text-muted);">Caricamento ticket in corso...</p>
+        </div>
+
+    </div>
+
+    <script>
+        window.onload = function() {
+            caricaTickets();
+        };
+
+        async function caricaTickets() {
+            const container = document.getElementById('ticketsContainer');
+
+            try {
+                const response = await fetch('http://localhost:8080/api/ticket', {
+                    headers: window.getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error("Errore API");
+
+                const tickets = await response.json();
+
+                if (tickets.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Nessun ticket in attesa al momento.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                
+                tickets.forEach(t => {
+                    const card = document.createElement('div');
+                    card.className = 'ticket-card';
+                    
+                    card.innerHTML = `
+                        <div class="ticket-header">
+                            <h3>${t.idSessione}</h3>
+                            <span class="badge" style="background: rgba(255, 184, 0, 0.1); color: #ffb800;">IN ATTESA</span>
+                        </div>
+                        <div class="ticket-details">
+                            <p><strong>Categoria:</strong> ${t.categoria}</p>
+                            <p><strong>Data Segnalazione:</strong> ${t.data.replace('T', ' ').substring(0, 16)}</p>
+                            <p><strong>Dettagli:</strong> ${t.dettagli}</p>
+                        </div>
+                        <div class="ticket-actions">
+                            <button onclick="assegnaTicket('${t.idSessione}')">Prendi in Carico</button>
+                            <button class="btn-chiudi" onclick="chiudiTicket('${t.idSessione}')">Chiudi Direttamente</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                container.innerHTML = '<p style="text-align: center; color: #ff4d6d;">Impossibile caricare i ticket.</p>';
+            }
+        }
+
+        async function assegnaTicket(id) {
+            if (!confirm(`Sei sicuro di voler prendere in carico il ticket ${id}?`)) return;
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/ticket/assegna', {
+                    method: 'POST',
+                    headers: window.getAuthJsonHeaders(),
+                    body: JSON.stringify({ idSessione: id })
+                });
+                
+                if (response.ok) {
+                    alert("Ticket preso in carico con successo!");
+                    caricaTickets();
+                } else {
+                    alert("Errore nell'assegnazione.");
+                }
+            } catch (error) {
+                alert("Errore di connessione al server.");
+            }
+        }
+
+        async function chiudiTicket(id) {
+            if (!confirm(`Sei sicuro di voler chiudere il ticket ${id}?`)) return;
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/ticket/chiudi', {
+                    method: 'POST',
+                    headers: window.getAuthJsonHeaders(),
+                    body: JSON.stringify({ idSessione: id })
+                });
+                
+                if (response.ok) {
+                    alert("Ticket chiuso con successo!");
+                    caricaTickets();
+                } else {
+                    alert("Errore nella chiusura.");
+                }
+            } catch (error) {
+                alert("Errore di connessione al server.");
+            }
+        }
+    </script>
+</body>
+</html>

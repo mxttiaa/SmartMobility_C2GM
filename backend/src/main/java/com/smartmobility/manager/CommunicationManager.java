@@ -15,8 +15,8 @@ public class CommunicationManager {
         this.sessioneDAO = new SessioneAssistenzaDAO();
     }
 
-    public SessioneAssistenza richiediAssistenza(Account utente, String categoria, String dettagli) {
-        if (utente == null) return null;
+    public SessioneAssistenza richiediAssistenza(String email, String categoria, String dettagli) {
+        if (email == null || email.isEmpty()) return null;
         
         SessioneAssistenza sessione = new SessioneAssistenza(
             "SESS-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(),
@@ -25,7 +25,7 @@ public class CommunicationManager {
             LocalDateTime.now()
         );
         
-        sessioneDAO.create(sessione, utente.getEmail());
+        sessioneDAO.create(sessione, email);
         System.out.println("Nuova sessione di assistenza creata con ID: " + sessione.getIdSessione());
         
         return sessione;

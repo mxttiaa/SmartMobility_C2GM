@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Smart Mobility</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body style="align-items: center; justify-content: center; height: 100vh;">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container" style="max-width: 420px; padding: 40px;">
+        <h1 style="font-size: 2rem; margin-bottom: 5px;">Smart Mobility</h1>
+        <p class="subtitle" style="margin-bottom: 30px;">Accedi al tuo account</p>
+
+        <div id="errorBanner" style="display: none; padding: 12px; border-radius: 12px; background: rgba(255, 77, 109, 0.1); border: 1px solid rgba(255, 77, 109, 0.3); color: #ff4d6d; font-size: 14px; margin-bottom: 20px; text-align: center;"></div>
+
+        <div class="input-group">
+            <input type="email" id="email" placeholder=" " required autocomplete="email">
+            <label for="email">Email</label>
+        </div>
+
+        <div class="input-group">
+            <input type="password" id="password" placeholder=" " required autocomplete="current-password">
+            <label for="password">Password</label>
+        </div>
+
+        <button id="loginBtn" onclick="eseguiLogin()" style="width: 100%; margin-bottom: 15px;">
+            <span id="btnText">Accedi</span>
+            <div id="btnLoader" class="loader" style="display: none;"></div>
+        </button>
+
+        <p style="text-align: center; color: var(--text-muted); font-size: 14px;">
+            Non hai un account? <a href="registrazione.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Registrati</a>
+        </p>
+    </div>
+
+    <script>
+        // Se già loggato, redirect alla home
+        if (localStorage.getItem('authToken')) {
+            window.location.href = 'index.html';
+        }
+
+        async function eseguiLogin() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorBanner = document.getElementById('errorBanner');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const button = document.getElementById('loginBtn');
+
+            errorBanner.style.display = 'none';
+
+            if (!email || !password) {
+                errorBanner.textContent = 'Inserisci email e password.';
+                errorBanner.style.display = 'block';
+                return;
+            }
+
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'block';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    // Salva token e dati utente
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userRole', data.ruolo);
+                    localStorage.setItem('userName', data.nome + ' ' + data.cognome);
+                    localStorage.setItem('userEmail', data.email);
+
+                    window.location.href = 'index.html';
+                } else {
+                    errorBanner.textContent = data.message || 'Credenziali non valide.';
+                    errorBanner.style.display = 'block';
+                }
+            } catch (error) {
+                errorBanner.textContent = 'Impossibile connettersi al server.';
+                errorBanner.style.display = 'block';
+            } finally {
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        // Login con Enter
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') eseguiLogin();
+        });
+    </script>
+</body>
+
+</html>

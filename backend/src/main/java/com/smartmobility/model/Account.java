@@ -7,6 +7,8 @@ public class Account {
     private String nome;
     private String cognome;
     private String email;
+    private String passwordHash;
+    private String ruolo;
     private double saldoCreditiBonus;
     private StatoAccount stato;
     
@@ -17,6 +19,8 @@ public class Account {
         this.nome = nome;
         this.cognome = cognome;
         this.email = email;
+        this.passwordHash = "";
+        this.ruolo = "CLIENTE";
         this.saldoCreditiBonus = 0.0;
         this.stato = StatoAccount.DA_VERIFICARE;
         this.promozioni = new ArrayList<>();
@@ -86,5 +90,21 @@ public class Account {
 
     public void sanziona(StatoAccount nuovoStato) {
         this.stato = nuovoStato;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public String getRuolo() {
+        return ruolo;
+    }
+
+    public void setRuolo(String ruolo) {
+        this.ruolo = ruolo;
     }
 }

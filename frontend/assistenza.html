@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistenza Clienti - Smart Mobility</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="AuthGuard.js"></script>
+    <style>
+        body {
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            gap: 30px;
+        }
+
+        .form-container, .list-container {
+            background: rgba(18, 18, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        .input-group select:focus, .input-group textarea:focus {
+            border-color: var(--secondary);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(0, 184, 255, 0.1);
+        }
+
+        .input-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .ticket-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .ticket-item h4 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+        }
+
+        .ticket-item p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .badge-attesa { background: rgba(255, 184, 0, 0.1); color: #ffb800; }
+        .badge-corso { background: rgba(0, 184, 255, 0.1); color: var(--secondary); }
+        .badge-terminata { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
+        <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="assistenza.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Assistenza</a>
+        <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
+        <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
+    </nav>
+
+    <div class="blob blob-1" style="top: -50px; left: -50px;"></div>
+    <div class="blob blob-2" style="bottom: auto; top: 200px; right: -50px;"></div>
+
+    <div class="dashboard-container">
+        
+        <div class="dashboard-title" style="text-align: center;">
+            <h1>Assistenza Clienti</h1>
+            <p class="subtitle">Hai bisogno di aiuto? Inviaci una richiesta</p>
+        </div>
+
+        <div class="form-container">
+            <h3>Nuova Richiesta</h3>
+            <div id="msgBanner" style="display: none; padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center;"></div>
+            
+            <div class="input-group">
+                <select id="categoria">
+                    <option value="" disabled selected>Seleziona una categoria</option>
+                    <option value="Problema al veicolo">Problema al veicolo</option>
+                    <option value="Problema di fatturazione">Problema di fatturazione</option>
+                    <option value="Incidente">Incidente</option>
+                    <option value="Altro">Altro</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <textarea id="dettagli" placeholder="Descrivi il tuo problema in dettaglio..."></textarea>
+            </div>
+            
+            <button onclick="inviaRichiesta()" id="submitBtn">Invia Richiesta</button>
+        </div>
+
+        <div class="list-container">
+            <h3>Le tue Richieste</h3>
+            <div id="ticketsList">
+                <p style="text-align: center; color: var(--text-muted);">Caricamento richieste in corso...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        window.onload = function() {
+            caricaTickets();
+        };
+
+        async function inviaRichiesta() {
+            const categoria = document.getElementById('categoria').value;
+            const dettagli = document.getElementById('dettagli').value.trim();
+            const msgBanner = document.getElementById('msgBanner');
+            const submitBtn = document.getElementById('submitBtn');
+
+            msgBanner.style.display = 'none';
+
+            if (!categoria || !dettagli) {
+                msgBanner.textContent = 'Completa tutti i campi prima di inviare.';
+                msgBanner.style.background = 'rgba(255, 77, 109, 0.1)';
+                msgBanner.style.color = '#ff4d6d';
+                msgBanner.style.border = '1px solid rgba(255, 77, 109, 0.3)';
+                msgBanner.style.display = 'block';
+                return;
+            }
+
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/assistenza', {
+                    method: 'POST',
+                    headers: window.getAuthJsonHeaders(),
+                    body: JSON.stringify({ categoria, dettagli })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    msgBanner.textContent = 'Richiesta inviata con successo! (ID: ' + data.idSessione + ')';
+                    msgBanner.style.background = 'rgba(0, 255, 136, 0.1)';
+                    msgBanner.style.color = 'var(--primary)';
+                    msgBanner.style.border = '1px solid rgba(0, 255, 136, 0.3)';
+                    msgBanner.style.display = 'block';
+                    
+                    document.getElementById('categoria').value = '';
+                    document.getElementById('dettagli').value = '';
+                    
+                    caricaTickets();
+                } else {
+                    throw new Error(data.message || 'Errore durante l\'invio');
+                }
+            } catch (error) {
+                msgBanner.textContent = error.message;
+                msgBanner.style.background = 'rgba(255, 77, 109, 0.1)';
+                msgBanner.style.color = '#ff4d6d';
+                msgBanner.style.border = '1px solid rgba(255, 77, 109, 0.3)';
+                msgBanner.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function caricaTickets() {
+            const container = document.getElementById('ticketsList');
+
+            try {
+                const response = await fetch('http://localhost:8080/api/assistenza', {
+                    headers: window.getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error("Errore API");
+
+                const tickets = await response.json();
+
+                if (tickets.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Non hai richieste di assistenza.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                
+                tickets.forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = 'ticket-item';
+                    
+                    let badgeClass = 'badge-attesa';
+                    let statoText = 'In Attesa';
+                    if (t.stato === 'IN_CORSO') { badgeClass = 'badge-corso'; statoText = 'In Corso'; }
+                    else if (t.stato === 'TERMINATA') { badgeClass = 'badge-terminata'; statoText = 'Terminata'; }
+
+                    div.innerHTML = `
+                        <h4>Ticket ${t.idSessione} <span class="badge ${badgeClass}" style="float: right; font-size: 11px;">${statoText}</span></h4>
+                        <p><strong>Categoria:</strong> ${t.categoria}</p>
+                        <p><strong>Data:</strong> ${t.data.replace('T', ' ').substring(0, 16)}</p>
+                        <p><strong>Dettagli:</strong> ${t.dettagli}</p>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                container.innerHTML = '<p style="text-align: center; color: #ff4d6d;">Impossibile caricare le richieste.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
