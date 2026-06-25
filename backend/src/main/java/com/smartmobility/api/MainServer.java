@@ -17,6 +17,9 @@ public class MainServer {
             // Creiamo un contesto per l'API dei veicoli
             server.createContext("/api/veicoli", new VeicoloAPI());
             
+            // Creiamo un contesto per l'API dello storico noleggi
+            server.createContext("/api/storico", new StoricoAPI());
+            
             server.setExecutor(null); // crea un executor di default
             server.start();
             

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Mobility - Storico Noleggi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Overriding flex alignment for dashboard layout */
+        body {
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-container input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-container input:focus {
+            border-color: var(--secondary);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(0, 184, 255, 0.1);
+        }
+
+        .search-container button {
+            width: auto;
+            padding: 15px 30px;
+            min-height: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="index.html">Prenota Veicolo</a>
+        <a href="dashboard.html">Dashboard Operatore</a>
+        <a href="storico.html">Storico Noleggi</a>
+    </nav>
+
+    <div class="blob blob-1" style="top: -50px; left: -50px;"></div>
+    <div class="blob blob-2" style="bottom: auto; top: 200px; right: -50px;"></div>
+
+    <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <div class="dashboard-title">
+            <h1>Il mio Storico Noleggi</h1>
+            <p class="subtitle">Controlla tutte le tue attività passate e in corso</p>
+        </div>
+
+        <div class="search-container">
+            <input type="email" id="emailSearch" placeholder="Inserisci la tua email">
+            <button onclick="caricaStorico()">Cerca</button>
+        </div>
+
+        <div class="table-container">
+            <table id="storicoTable">
+                <thead>
+                    <tr>
+                        <th>Codice Veicolo</th>
+                        <th>Data Inizio</th>
+                        <th>Stato</th>
+                    </tr>
+                </thead>
+                <tbody id="storicoBody">
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--text-muted);">Inserisci la tua email e
+                            clicca su "Cerca"</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function caricaStorico() {
+            const emailInput = document.getElementById('emailSearch');
+            const email = emailInput.value.trim();
+            const tbody = document.getElementById('storicoBody');
+
+            if (!email) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #ff4d6d;">Per favore inserisci un\'email valida.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);"><div class="loader" style="display: inline-block; border-top-color: var(--primary); width: 16px; height: 16px; margin-right: 10px; vertical-align: middle;"></div> Caricamento in corso...</td></tr>';
+
+            try {
+                const response = await fetch('http://localhost:8080/api/storico?email=' + encodeURIComponent(email));
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Nessun noleggio trovato per questa email.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = ''; // Svuota la tabella
+
+                data.forEach(item => {
+                    const tr = document.createElement('tr');
+
+                    let badgeColor = 'rgba(0, 255, 136, 0.1)';
+                    let textColor = 'var(--primary)';
+                    if (item.stato === 'TERMINATO') {
+                        badgeColor = 'rgba(255, 255, 255, 0.1)';
+                        textColor = 'var(--text-muted)';
+                    } else if (item.stato === 'IN_PAUSA') {
+                        badgeColor = 'rgba(255, 184, 0, 0.1)';
+                        textColor = '#ffb800';
+                    }
+
+                    tr.innerHTML = `
+                        <td><strong>${item.codiceVeicolo}</strong></td>
+                        <td>${item.dataInizio.replace('T', ' ').substring(0, 16)}</td>
+                        <td><span class="badge" style="display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: ${badgeColor}; color: ${textColor};">${item.stato}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('Errore nel recupero dello storico:', error);
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #ff4d6d;">Impossibile recuperare lo storico. Verifica che il server sia acceso.</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>
