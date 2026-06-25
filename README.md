@@ -1,39 +1,39 @@
 # Smart Mobility - Progetto di Gruppo
 
-Benvenuti nel repository del progetto Smart Mobility. Questo documento contiene tutte le istruzioni necessarie per configurare l'ambiente locale ed eseguire l'applicazione.
+Il presente documento contiene tutte le istruzioni necessarie per configurare l'ambiente locale ed eseguire l'applicazione.
 
 ## 🛠️ Prerequisiti
-Assicurati di avere installato sul tuo computer:
+Assicurarsi di avere installato sul proprio computer:
 - **Java Development Kit (JDK)** (versione 8 o superiore)
 - **MySQL Server**
 - **Antigravity IDE / VS Code** (con l'estensione "Live Server" installata)
 
 ## ⚙️ 1. Configurazione del Database
 Il progetto utilizza un file di configurazione per evitare di condividere le password su GitHub.
-1. Apri il tuo client MySQL ed esegui il file `init.sql` per creare il database `smart_mobility` e le tabelle.
-2. Nella cartella principale del progetto, fai una copia del file `config.example.properties` e rinominala in **`config.properties`**.
-3. Apri il nuovo file `config.properties` e inserisci il tuo username e la tua password locale di MySQL. *(Nota: questo file è ignorato da Git in automatico, quindi le tue credenziali sono al sicuro).*
+1. Aprire il client MySQL ed eseguire gli script SQL (es. `init.sql`, `update_core.sql`) per creare il database `smart_mobility` e le relative tabelle.
+2. Nella cartella principale del progetto, creare una copia del file `config.example.properties` e rinominarla in **`config.properties`**.
+3. Aprire il nuovo file `config.properties` e inserire l'username e la password locali di MySQL. *(Nota: questo file è ignorato da Git in automatico, garantendo la sicurezza delle credenziali).*
 
-## 🚀 2. Avvio del Server Backend (Java)
-Apri un terminale nella root del progetto (la cartella principale) ed esegui questi due comandi:
+## 🚀 2. Compilazione ed Esecuzione del Backend (Java)
+Aprire un terminale nella root del progetto (la cartella principale) ed eseguire i seguenti comandi:
 
-**Per compilare il codice:**
-`javac -d bin -cp "bin;lib/*" backend/*.java test/backend/*.java`
+**Per compilare il codice e i test:**
+`javac -d bin -sourcepath backend/src/main/java -cp "lib/*" test/*.java`
 
-**Per avviare il server (inclusi i driver MySQL):**
-`java -cp "bin;lib/*" backend.UtenteController`
+**Per avviare i test (inclusi i driver MySQL):**
+`java -cp "bin;lib/*" test.TestUserManager`
 
-Se vedi la scritta *"API in ascolto sulla porta 8080"*, il backend è pronto. Lascia il terminale aperto.
+*(Nota: per avviare il server principale in futuro, sostituire la classe di test con il Controller principale dell'applicazione).*
 
 ## 🌐 3. Avvio del Frontend
-1. Entra nella cartella `/frontend/`.
-2. Fai clic destro sul file `index.html` e seleziona **"Open with Live Server"**.
-3. Il browser si aprirà automaticamente e potrai testare la registrazione e l'accesso!
+1. Entrare nella cartella `/frontend/`.
+2. Fare clic destro sul file `index.html` e selezionare **"Open with Live Server"**.
+3. Il browser si aprirà automaticamente, consentendo di testare le funzionalità dell'interfaccia.
 
 ### 🔑 Account di Test Preconfigurati
 Il database viene inizializzato con alcuni account fittizi per testare i diversi ruoli del sistema (RBAC):
 
-* **Utente Standard:** (Puoi registrarne uno nuovo tramite l'interfaccia)
+* **Utente Standard:** (È possibile registrarne uno nuovo tramite l'interfaccia o tramite i test)
 * **Operatore del Servizio (Mappa Globale):**
   * **Email:** `operatore@zootropolis.it`
   * **Password:** `123456`
@@ -41,55 +41,54 @@ Il database viene inizializzato con alcuni account fittizi per testare i diversi
 ---
 
 ## 🤝 4. Regole di Sviluppo e Flusso Git
-Per mantenere il codice stabile ed evitare conflitti (il ramo `main` è protetto e non accetta caricamenti diretti), seguiamo tutti questo flusso di lavoro per ogni nuova funzionalità (User Story):
+Per mantenere il codice stabile ed evitare conflitti (il ramo `main` è protetto o designato per il codice in produzione), seguire il seguente flusso di lavoro per ogni nuova funzionalità (User Story):
 
-**Step 1: Aggiorna il tuo ambiente**
-Prima di iniziare a programmare, assicurati di avere l'ultima versione del progetto:  
+**Step 1: Aggiornare l'ambiente**
+Prima di iniziare a programmare, assicurarsi di avere l'ultima versione del progetto:  
 `git pull origin main`
 
-**Step 2: Crea il tuo ramo di lavoro (Branch)**
-Crea un ramo isolato usando il nome della funzionalità (es. `uc03-prenotazione`):  
-`git checkout -b nome-del-tuo-ramo`
+**Step 2: Creare il ramo di lavoro (Branch)**
+Creare un ramo isolato utilizzando il nome della funzionalità (es. `uc03-prenotazione`):  
+`git checkout -b nome-del-ramo`
 
-**Step 3: Lavora e salva**
-Scrivi il tuo codice su Antigravity IDE, compila e testa. Quando hai finito, salva il lavoro:  
+**Step 3: Lavorare e salvare**
+Scrivere il codice, compilare e testare. Al termine, salvare il lavoro:  
 `git add .`  
-`git commit -m "Breve descrizione di cosa hai fatto"`
+`git commit -m "Breve descrizione delle modifiche effettuate"`
 
-**Step 4: Invia il tuo ramo su GitHub**
-Carica il tuo lavoro sul repository remoto:  
-`git push -u origin nome-del-tuo-ramo`
+**Step 4: Inviare il ramo su GitHub**
+Caricare il lavoro sul repository remoto:  
+`git push -u origin nome-del-ramo`
 
-**Step 5: Apri una Pull Request**
-Vai sulla pagina web di GitHub del progetto. Vedrai un pulsante verde **"Compare & pull request"**. Cliccalo, scrivi un titolo e conferma. A questo punto il codice verrà revisionato prima di essere unito al progetto principale.
+**Step 5: Aprire una Pull Request**
+Andare sulla pagina web di GitHub del progetto. Individuare il pulsante verde **"Compare & pull request"**. Cliccarlo, inserire un titolo e confermare. A questo punto il codice verrà revisionato prima di essere unito al progetto principale.
 
 **Step 6: Sincronizzazione e Pulizia (Dopo il Merge)**
-Una volta che la tua Pull Request è stata approvata e unita (merged) nel progetto principale su GitHub, è fondamentale allineare il tuo computer locale e fare pulizia:
+Una volta che la Pull Request è stata approvata e unita (merged) nel progetto principale su GitHub, è fondamentale allineare l'ambiente locale e fare pulizia:
 
-1. Torna nel porto sicuro (il ramo principale):  
+1. Tornare sul ramo principale:  
 `git checkout main`
 
-2. Scarica l'ultima versione del codice (che ora contiene anche il tuo lavoro appena approvato):  
+2. Scaricare l'ultima versione del codice (che ora contiene anche il lavoro appena approvato):  
 `git pull origin main`
 
-3. Elimina il ramo locale di lavoro ormai concluso per mantenere pulito l'ambiente:  
-`git branch -d nome-del-tuo-ramo`
+3. Eliminare il ramo locale di lavoro ormai concluso per mantenere pulito l'ambiente:  
+`git branch -d nome-del-ramo`
 
-*(💡 **Nota:** Se Git dovesse bloccarsi dicendo "The branch is not fully merged", ma tu sei assolutamente sicuro che il codice sia già al sicuro sul `main` di GitHub, puoi forzare l'eliminazione usando la D maiuscola: `git branch -D nome-del-tuo-ramo`)*
+*(💡 **Nota:** Qualora Git dovesse bloccarsi riportando il messaggio "The branch is not fully merged", ed essendo assolutamente sicuri che il codice sia già al sicuro sul ramo `main` di GitHub, è possibile forzare l'eliminazione utilizzando la D maiuscola: `git branch -D nome-del-ramo`)*
 
 ---
 
 ## 🧪 5. Esecuzione dei Test
-Per testare la logica di business (es. `MezzoManager`) senza l'uso di framework esterni, puoi utilizzare una semplice classe Java con un metodo `main`.
+Per testare la logica di business (es. i Manager) senza l'uso di framework esterni, è possibile utilizzare le classi Java presenti nella cartella `test`.
 
-**1. Compilare il progetto (inclusi i test):**
-Apri un terminale nella root del progetto ed esegui:  
-`javac -d bin -cp "bin;lib/*" backend/*.java test/backend/*.java`
+**1. Compilare il progetto:**
+Aprire un terminale nella root del progetto ed eseguire:  
+`javac -d bin -sourcepath backend/src/main/java -cp "lib/*" test/*.java`
 
 **2. Eseguire i test:**
-`java -cp "bin;lib/*" test.backend.MezzoManagerTest`  
-`java -cp "bin;lib/*" test.backend.FlottaTest`  
+`java -cp "bin;lib/*" test.TestUserManager`  
 
-Se il test ha successo, vedrai un messaggio di conferma nel terminale, altrimenti un messaggio di errore indicherà il fallimento delle asserzioni.
+In caso di successo, un messaggio di conferma verrà visualizzato nel terminale; in caso contrario, verranno segnalate le eccezioni riscontrate.
 
 ---
