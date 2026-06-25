@@ -1,0 +1,70 @@
+@startuml sd_PrenotareVeicolo
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":LogicService" as LogicService <<Control>>
+participant ":PricingManager" as PricingManager <<Control>>
+participant ":BookingManager" as BookingManager <<Control>>
+
+' 1. Inclusione del caso d'uso di autenticazione
+ref over Utente, Modulo : UC-19 AutenticareUtente
+
+' 2-3. Inserimento destinazione e suggerimento veicolo
+Utente -> Modulo : Inserisce destinazione prevista
+activate Modulo
+
+Modulo -> LogicService : calcolaPercorsoOttimale(posizione, destinazione)
+activate LogicService
+LogicService --> Modulo : percorso
+deactivate LogicService
+
+Modulo --> Utente : Suggerisce tipo veicolo idoneo
+
+' 4-5. Selezione e calcolo preventivo
+Utente -> Modulo : Seleziona tipologia e numero veicoli
+
+Modulo -> PricingManager : calcolaPreventivo(tariffa, distanza)
+activate PricingManager
+
+alt Parametri non validi
+    PricingManager --> Modulo : errore ("Parametri errati")
+    Modulo --> Utente : Notifica errore e richiede corretto inserimento
+else Parametri validi
+    PricingManager --> Modulo : costoStimato
+    deactivate PricingManager
+    Modulo --> Utente : Mostra stima del costo del noleggio
+end
+
+' 6. Conferma e tentativo di prenotazione
+Utente -> Modulo : Conferma prenotazione
+Modulo -> BookingManager : prenotaVeicolo(account, veicoli, destinazione)
+activate BookingManager
+
+alt Veicolo non più disponibile
+    ' Richiamo compatto al diagramma separato
+    ref over Utente, BookingManager : UC-04.1 Veicolo non più disponibile
+else Prenotazione confermata
+    participant "nuovaPrenotazione\n: Prenotazione" as Prenotazione <<Entity>>
+    create Prenotazione
+    BookingManager -> Prenotazione : <<create>> (destinazione, durataMassima, costoStimato, stato=ATTIVA)
+    
+    BookingManager --> Modulo : confermaPrenotazione
+    deactivate BookingManager
+    
+    ' 8. Punto di estensione
+    opt Punto di estensione: scadenzaPrenotazione
+        ref over Modulo, BookingManager : UC-20 InviareNotificaScadenza
+    end
+    
+    ' 9. Conferma finale all'utente
+    Modulo --> Utente : Mostra conferma prenotazione
+end
+
+deactivate Modulo
+
+@enduml

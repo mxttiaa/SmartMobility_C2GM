@@ -1,0 +1,120 @@
+@startuml Vista_Amministrazione_Sicurezza
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+hide circle
+
+' --- ENUMERAZIONI ---
+enum StatoAccount {
+  DA_VERIFICARE
+  ATTIVO
+  SOSPESO
+  BLOCCATO
+}
+
+enum StatoVeicolo {
+  DISPONIBILE
+  IN_USO
+  IN_MANUTENZIONE
+  BATTERIA_SCARICA
+}
+
+enum StatoSegnalazione {
+  IN_ATTESA
+  IN_CARICO
+  SOSPESA
+  CHIUSA
+}
+
+enum TipoRestrizione {
+  ZTL
+  AREA_MANUTENZIONE
+  LIMITE_VELOCITA
+}
+
+' --- CLASSI PONTE ---
+class Account {
+  - nome: String
+  - cognome: String
+  - email: String
+  - saldoCreditiBonus: double
+  - stato: StatoAccount
+}
+
+abstract class Veicolo {
+  - codiceIdentificativo: String
+  - livelloCaricaResidua: float
+  - portataMassima: float
+  - statoOperativo: StatoVeicolo
+  - coordinateAttuali: Posizione
+}
+
+' --- CLASSI DI DOMINIO (BACK-OFFICE E TERRITORIO) ---
+class SegnalazioneSupporto {
+  - idSegnalazione: String
+  - descrizioneProblema: String
+  - istanteCreazione: DateTime
+  - notaAggiornamento: String
+  - esitoIntervento: String
+  - stato: StatoSegnalazione
+  + prendiInCarico(): void
+  + sospendi(nota: String): void
+  + chiudi(esito: String): void
+}
+
+class SegnalazioneGuasto {
+  - idSegnalazione: String
+  - categoriaGuasto: String
+  - descrizioneAnomalia: String
+  - istanteCreazione: DateTime
+  - stato: StatoSegnalazione
+}
+
+class RegolaUrbana {
+  - idRegola: String
+  - tipo: TipoRestrizione
+  - perimetro: List
+  - valoreLimiteVelocita: int
+  - dataInizio: DateTime
+  - dataFine: DateTime
+  + isAttiva(istante: DateTime): boolean
+}
+
+class ReportStatistico {
+  - idReport: String
+  - criteriAnalisi: String
+  - dataGenerazione: DateTime
+  - datiAggregati: Map
+  + esportaFormato(): void
+}
+
+' --- CLASSI DI CONTROLLO ---
+class AdminManager {
+  + visualizzaCodaSegnalazioni(): List
+  + assegnaSegnalazione(operatore: Account, segnalazione: SegnalazioneSupporto): void
+  + aggiornaStatoSegnalazione(segnalazione: SegnalazioneSupporto, nota: String): void
+  + aggiungiRegolaUrbana(regola: RegolaUrbana): void
+  + generaReportStatistico(criteri: String): ReportStatistico
+  + visualizzaVeicoliDaManutenere(filtri: List): List
+  + gestisciAllarmeSicurezza(veicolo: Veicolo): void
+  + forzaBloccoRemoto(veicolo: Veicolo): void
+}
+
+' --- RELAZIONI E LAYOUT FORZATO ---
+' L'AdminManager orchestra dall'alto verso il basso
+AdminManager -down- SegnalazioneSupporto : supervisiona
+AdminManager -down- SegnalazioneGuasto : supervisiona
+AdminManager -down- RegolaUrbana : gestisce
+AdminManager -down- ReportStatistico : gestisce
+AdminManager -right- Account : verifica permessi
+
+' Interazioni dell'Account (ruoli operatore e amministrazione)
+Account "1" -down- "0..*" SegnalazioneSupporto : apre
+Account "0..1" -down- "0..*" SegnalazioneSupporto : gestisce
+Account "1" -down- "0..*" SegnalazioneGuasto : apre
+Account "1" -down- "0..*" RegolaUrbana : configura
+Account "1" -down- "0..*" ReportStatistico : genera
+
+' Collegamento tra Guasto e Veicolo fisico
+SegnalazioneGuasto "*" -right- "1" Veicolo : riguarda
+
+@enduml

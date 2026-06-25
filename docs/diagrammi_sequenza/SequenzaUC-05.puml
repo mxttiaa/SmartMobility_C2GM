@@ -1,0 +1,82 @@
+@startuml sd_GestireNoleggio
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":BookingManager" as BookingManager <<Control>>
+participant ":PricingManager" as PricingManager <<Control>>
+participant ":Veicolo" as Veicolo <<Entity>>
+
+' 1. Inclusione del caso d'uso di autenticazione
+ref over Utente, Modulo : UC-19 AutenticareUtente
+
+' 2-3. Sblocco e avvio
+Utente -> Modulo : Fornisce identificativo veicolo
+activate Modulo
+
+Modulo -> BookingManager : avviaNoleggio(account, veicolo)
+activate BookingManager
+
+alt Veicolo non sbloccabile (Manutenzione, batteria o prenotato)
+    BookingManager --> Modulo : errore ("Veicolo non disponibile")
+    Modulo --> Utente : Notifica impossibilità di sblocco
+else Sblocco consentito
+    participant "noleggioCorrente\n: Noleggio" as Noleggio <<Entity>>
+    create Noleggio
+    BookingManager -> Noleggio : <<create>> (inizioNoleggio, stato=IN_CORSO)
+    
+    BookingManager -> Veicolo : sblocca()
+    activate Veicolo
+    deactivate Veicolo
+    
+    BookingManager --> Modulo : confermaAvvio
+    Modulo --> Utente : Conferma sblocco e avvia conteggio tariffa
+    
+    ' 4. Utilizzo e Sosta (Estensione per UC-05.1)
+    opt Utente richiede sospensione temporanea
+        ref over Utente, BookingManager : UC-05.1 Sosta Temporanea
+    end
+    
+    ' 5-7. Terminazione e controlli
+    Utente -> Modulo : Richiede terminazione noleggio
+    Modulo -> BookingManager : concludiNoleggio(noleggio)
+    
+    BookingManager -> BookingManager : verificaAreaDiSosta()
+    
+    alt Area di sosta non consentita
+        BookingManager --> Modulo : errore ("Posizione non valida")
+        Modulo --> Utente : Nega terminazione e invita a riposizionare il veicolo
+    else Posizione valida
+        BookingManager -> Veicolo : blocca()
+        activate Veicolo
+        deactivate Veicolo
+        
+        BookingManager -> Noleggio : termina()
+        activate Noleggio
+        deactivate Noleggio
+        
+        ' 8. Punto di estensione
+        opt Punto di estensione: chiusuraNoleggio
+            ref over Modulo, BookingManager : UC-21 AssegnareCreditiBonus
+        end
+        
+        BookingManager --> Modulo : noleggioConcluso
+        deactivate BookingManager
+        
+        ' 9. Riepilogo e pagamento
+        Modulo -> PricingManager : calcolaCostoTotale(noleggio, tariffa)
+        activate PricingManager
+        PricingManager --> Modulo : costoFinale
+        deactivate PricingManager
+        
+        Modulo --> Utente : Mostra riepilogo corsa e processa addebito
+    end
+end
+
+deactivate Modulo
+
+@enduml

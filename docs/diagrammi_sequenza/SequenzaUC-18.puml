@@ -1,0 +1,62 @@
+@startuml sd_GestireAccountUtenti
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Operatore del Servizio" as Operatore
+participant ":Dashboard" as Modulo <<Boundary>>
+participant ":UserManager" as UserManager <<Control>>
+participant ":Account" as Account <<Entity>>
+
+' 1-2. Visualizzazione del profilo utente
+Operatore -> Modulo : Richiede visualizzazione profilo utente specifico
+activate Modulo
+
+Modulo -> UserManager : getDettagliProfilo(idUtente)
+activate UserManager
+
+' Recupero dei dati dall'entità
+UserManager -> Account : datiAnagrafici, storico, stato
+activate Account
+Account --> UserManager : datiProfilo
+deactivate Account
+
+UserManager --> Modulo : dettagliProfilo
+deactivate UserManager
+
+Modulo --> Operatore : Mostra dati anagrafici, storico noleggi e stato account
+
+' 3. Richiesta di blocco/sospensione
+Operatore -> Modulo : Seleziona sospensione/blocco e inserisce motivazione
+Modulo -> UserManager : bloccaProfilo(account, motivazione)
+activate UserManager
+
+' 4. Convalida della richiesta
+UserManager -> UserManager : verificaNoleggiInCorso(account)
+
+alt Utente con noleggio attualmente in corso
+    ' Gestione della deviazione
+    UserManager --> Modulo : errore ("Noleggio attivo")
+    Modulo --> Operatore : Notifica impossibilità blocco e richiede terminazione forzata
+else Validazione superata (Nessun noleggio attivo)
+    
+    ' Revoca permessi e aggiornamento stato
+    UserManager -> Account : sanziona(BLOCCATO / SOSPESO)
+    activate Account
+    deactivate Account
+    
+    ' 5. Notifica all'utente
+    UserManager -> UserManager : inviaNotificaUtente(account, "Profilo sanzionato")
+    
+    ' 6. Conferma all'Operatore
+    UserManager --> Modulo : confermaBloccoRegistrata
+    deactivate UserManager
+    
+    Modulo --> Operatore : Conferma blocco del profilo
+end
+
+deactivate Modulo
+
+@enduml

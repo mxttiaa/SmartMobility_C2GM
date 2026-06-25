@@ -1,0 +1,52 @@
+@startuml sd_RichiedereAssistenza
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":CommunicationManager" as CommunicationManager <<Control>>
+
+Utente -> Modulo : Richiede avvio sessione di assistenza
+activate Modulo
+Modulo --> Utente : Mostra modulo (categoria e dettagli)
+
+Utente -> Modulo : Inserisce categoria e dettagli
+Modulo -> CommunicationManager : richiediAssistenza(utente, categoria, dettagli)
+activate CommunicationManager
+
+' Il controller verifica la disponibilità prima di procedere
+CommunicationManager -> CommunicationManager : verificaDisponibilitaOperatori()
+activate CommunicationManager
+deactivate CommunicationManager
+
+alt Nessun operatore disponibile
+    CommunicationManager --> Modulo : eccezione ("Operatori occupati")
+    Modulo --> Utente : Notifica indisponibilità e suggerisce l'invio di una segnalazione
+else Operatore disponibile
+    ' Creazione della sessione di assistenza
+    participant "nuovaSessione\n: SessioneAssistenza" as Sessione <<Entity>>
+    create Sessione
+    CommunicationManager -> Sessione : <<create>> (categoria, dettagli, stato=IN_ATTESA)
+    
+    ' Il controller inoltra la richiesta internamente
+    CommunicationManager -> CommunicationManager : inoltraRichiesta(nuovaSessione, operatore)
+    activate CommunicationManager
+    deactivate CommunicationManager
+    
+    ' Avvio effettivo della sessione
+    CommunicationManager -> Sessione : avvia()
+    activate Sessione
+    deactivate Sessione
+    
+    CommunicationManager --> Modulo : sessioneAvviata
+    deactivate CommunicationManager
+    
+    Modulo --> Utente : Conferma presa in carico della richiesta
+end
+
+deactivate Modulo
+
+@enduml

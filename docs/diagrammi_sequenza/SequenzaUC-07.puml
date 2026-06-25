@@ -1,0 +1,49 @@
+@startuml sd_GestireMetodiPagamento
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":UserManager" as UserManager <<Control>>
+actor "Sistema di Pagamento" as SistemaPagamento <<External Service>>
+participant ":Account" as Account <<Entity>>
+
+Utente -> Modulo : Richiede aggiunta nuovo metodo di pagamento
+activate Modulo
+Modulo --> Utente : Mostra modulo inserimento dati
+
+Utente -> Modulo : Inserisce dati e conferma
+Modulo -> UserManager : associaPagamento(account, datiCarta)
+activate UserManager
+
+UserManager -> SistemaPagamento : validaDati(datiCarta)
+activate SistemaPagamento
+
+alt Dati rifiutati
+    SistemaPagamento --> UserManager : false
+    UserManager --> Modulo : errore ("Validazione fallita")
+    Modulo --> Utente : Notifica errore e riporta al modulo
+else Dati validi
+    SistemaPagamento --> UserManager : true
+    deactivate SistemaPagamento
+    
+    participant "nuovoMetodo\n: MetodoPagamento" as Metodo <<Entity>>
+    create Metodo
+    UserManager -> Metodo : <<create>> (tokenDati)
+    
+    UserManager -> Account : aggiungiMetodo(nuovoMetodo)
+    activate Account
+    deactivate Account
+    
+    UserManager --> Modulo : confermaAssociazione
+    deactivate UserManager
+    
+    Modulo --> Utente : Conferma avvenuta registrazione
+end
+
+deactivate Modulo
+
+@enduml

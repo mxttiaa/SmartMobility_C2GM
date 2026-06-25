@@ -1,0 +1,53 @@
+@startuml Vista_UserManager
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+hide circle
+
+' --- ENUMERAZIONI ---
+enum StatoAccount {
+  DA_VERIFICARE
+  ATTIVO
+  SOSPESO
+  BLOCCATO
+}
+
+' --- CLASSI DI DOMINIO ---
+class Account {
+  - nome: String
+  - cognome: String
+  - email: String
+  - saldoCreditiBonus: double
+  - stato: StatoAccount
+  + applicaCreditiBonus(importo: double): void
+  + sanziona(nuovoStato: StatoAccount): void
+}
+
+class MetodoPagamento {
+  - tokenDati: String
+  + isValido(): boolean
+}
+
+class Promozione {
+  - codiceAlfanumerico: String
+  - valoreSconto: double
+  - dataScadenza: DateTime
+  + isValida(): boolean
+}
+
+' --- CLASSI DI CONTROLLO ---
+class UserManager {
+  + registraAccount(nome: String, cognome: String, email: String): Account
+  + convalidaCodice(account: Account, codice: String): boolean
+  + associaPagamento(account: Account, datiCarta: String): void
+  + bloccaProfilo(account: Account, motivazione: String): void
+}
+
+' --- RELAZIONI E LAYOUT FORZATO ---
+' Il manager sta in alto e punta verso il basso all'Account
+UserManager -down- Account : gestisce
+
+' L'Account ha il pagamento a destra e le promozioni in basso
+Account "1" -right- "0..1" MetodoPagamento : possiede
+Account "1" -down- "0..*" Promozione : riscatta
+
+@enduml

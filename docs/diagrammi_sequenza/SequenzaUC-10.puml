@@ -1,0 +1,46 @@
+@startuml sd_SegnalareGuasto
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":CommunicationManager" as CommunicationManager <<Control>>
+participant ":Veicolo" as Veicolo <<Entity>>
+
+Utente -> Modulo : Richiede apertura segnalazione guasto
+activate Modulo
+Modulo --> Utente : Mostra categorie di guasto predefinite
+
+Utente -> Modulo : Seleziona categoria, inserisce descrizione e invia
+Modulo -> CommunicationManager : inoltraSegnalazione(veicolo, categoria, descrizione)
+activate CommunicationManager
+
+' Il controller effettua la validazione dei dati ricevuti
+CommunicationManager -> CommunicationManager : validaDatiSegnalazione()
+
+alt Dati non validi o incompleti
+    CommunicationManager --> Modulo : errore ("Dati invalidi")
+    Modulo --> Utente : Richiede correzione delle informazioni
+else Dati validi
+    ' Creazione dell'entità segnalazione
+    participant "nuovaSegnalazione\n: Segnalazione" as Segnalazione <<Entity>>
+    create Segnalazione
+    CommunicationManager -> Segnalazione : <<create>> (categoria, descrizione)
+    
+    ' Associazione allo storico del veicolo
+    CommunicationManager -> Veicolo : associaSegnalazione(nuovaSegnalazione)
+    activate Veicolo
+    deactivate Veicolo
+    
+    CommunicationManager --> Modulo : confermaRegistrazione
+    deactivate CommunicationManager
+    
+    Modulo --> Utente : Conferma ricezione della segnalazione
+end
+
+deactivate Modulo
+
+@enduml

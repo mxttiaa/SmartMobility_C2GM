@@ -1,0 +1,46 @@
+@startuml sd_AnalizzareStatisticheMobilità
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Amministrazione Pubblica" as Amministrazione
+participant ":DashboardPA" as Modulo <<Boundary>>
+participant ":AdminManager" as AdminManager <<Control>>
+
+' 1-2. Richiesta e inserimento criteri
+Amministrazione -> Modulo : Richiede generazione report statistico
+activate Modulo
+Modulo --> Amministrazione : Mostra modulo per i criteri di analisi
+
+' 3. Conferma
+Amministrazione -> Modulo : Inserisce criteri e conferma la richiesta
+Modulo -> AdminManager : generaReportStatistico(criteri)
+activate AdminManager
+
+' 4. Aggregazione dati
+AdminManager -> AdminManager : aggregaDatiStorici(criteri)
+activate AdminManager
+deactivate AdminManager
+
+alt Nessun dato presente per i parametri impostati
+    ' Gestione della deviazione al passo 4
+    AdminManager --> Modulo : eccezione ("Dati insufficienti")
+    Modulo --> Amministrazione : Notifica assenza risultati e richiede modifica criteri
+else Dati disponibili
+    ' 5. Elaborazione informazioni e generazione report
+    participant "nuovoReport\n: ReportStatistico" as Report <<Entity>>
+    create Report
+    AdminManager -> Report : <<create>> (criteri, datiAggregati)
+    
+    AdminManager --> Modulo : reportGenerato
+    deactivate AdminManager
+    
+    ' 6. Visualizzazione risultati
+    Modulo --> Amministrazione : Mostra risultati del report statistico
+end
+
+deactivate Modulo
+
+@enduml

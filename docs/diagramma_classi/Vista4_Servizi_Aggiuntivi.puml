@@ -1,0 +1,76 @@
+@startuml Vista_Servizi_Aggiuntivi
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+hide circle
+
+' --- ENUMERAZIONI ---
+enum StatoSessione {
+  IN_ATTESA
+  IN_CORSO
+  TERMINATA
+}
+
+enum TipoRestrizione {
+  ZTL
+  AREA_MANUTENZIONE
+  LIMITE_VELOCITA
+}
+
+' --- CLASSI PONTE ---
+class Account {
+  - nome: String
+  - cognome: String
+  - email: String
+  - saldoCreditiBonus: double
+  - stato: StatoAccount
+}
+
+class RegolaUrbana {
+  - idRegola: String
+  - tipo: TipoRestrizione
+  - perimetro: List
+  - valoreLimiteVelocita: int
+  - dataInizio: DateTime
+  - dataFine: DateTime
+  + isAttiva(istante: DateTime): boolean
+}
+
+' --- CLASSI DI DOMINIO (UTILITY) ---
+class Percorso {
+  - destinazione: String
+  - tempoStimato: int
+  - distanzaTotale: float
+  - coordinateTragitto: List
+}
+
+class SessioneAssistenza {
+  - idSessione: String
+  - categoriaProblema: String
+  - dettagliPreliminari: String
+  - istanteAvvio: DateTime
+  - stato: StatoSessione
+  + avvia(): void
+  + termina(): void
+}
+
+' --- CLASSI DI CONTROLLO ---
+class LogicService {
+  + calcolaPercorsoOttimale(posizioneAttuale: Posizione, destinazione: String, regoleAttive: List): Percorso
+}
+
+class CommunicationManager {
+  + richiediAssistenza(utente: Account, categoria: String, dettagli: String): SessioneAssistenza
+  + verificaDisponibilitaOperatori(): boolean
+  + inoltraRichiesta(sessione: SessioneAssistenza, operatore: Account): void
+}
+
+' --- RELAZIONI E LAYOUT FORZATO ---
+LogicService -down- Percorso : genera
+LogicService -right- RegolaUrbana : consulta
+
+CommunicationManager -down- SessioneAssistenza : orchestra
+
+Account "1" -right- "0..*" SessioneAssistenza : richiede
+Account "0..1" -down- "0..*" SessioneAssistenza : gestisce
+
+@enduml

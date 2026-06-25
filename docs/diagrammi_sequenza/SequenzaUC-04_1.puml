@@ -1,0 +1,29 @@
+@startuml sd_PrenotareVeicolo_Conflitto
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":BookingManager" as BookingManager <<Control>>
+
+' Il flusso inizia dal momento della conferma (Passo 6 della sequenza principale)
+Utente -> Modulo : Conferma prenotazione
+activate Modulo
+
+Modulo -> BookingManager : prenotaVeicolo(account, veicoli, destinazione)
+activate BookingManager
+
+' Il sistema rileva il conflitto di tempistiche
+BookingManager -> BookingManager : verificaDisponibilitàAttuale()
+
+BookingManager --> Modulo : eccezione ("Veicolo già prenotato")
+deactivate BookingManager
+
+Modulo --> Utente : Comunica indisponibilità dei veicoli selezionati
+Modulo --> Utente : Riporta alla mappa per una nuova selezione
+deactivate Modulo
+
+@enduml

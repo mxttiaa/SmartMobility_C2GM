@@ -1,0 +1,43 @@
+@startuml sd_ConsultareDettagliVeicolo
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+' Nasconde le ripetizioni degli elementi alla fine delle lifeline
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":BookingManager" as BookingManager <<Control>>
+participant ":LogicService" as LogicService <<Control>>
+participant ":Veicolo" as Veicolo <<Entity>>
+
+Utente -> Modulo : Seleziona un veicolo dalla mappa
+activate Modulo
+
+Modulo -> BookingManager : getDettagliVeicolo(codiceIdentificativo)
+activate BookingManager
+
+alt Dati del veicolo non recuperabili
+    BookingManager --> Modulo : errore
+    Modulo --> Utente : Mostra messaggio di errore e ripristina la mappa
+else Dati recuperati correttamente
+    BookingManager -> Veicolo : getAutonomiaStimata()
+    activate Veicolo
+    Veicolo --> BookingManager : autonomiaStimata
+    deactivate Veicolo
+    
+    BookingManager --> Modulo : dettagliVeicolo (tipologia, portata, stato, posizione, autonomia)
+    deactivate BookingManager
+
+    Modulo -> LogicService : calcolaPercorsoOttimale(posizioneUtente, posizioneVeicolo, regoleAttive)
+    activate LogicService
+    LogicService --> Modulo : percorso (include tempoStimato)
+    deactivate LogicService
+
+    Modulo --> Utente : Mostra riepilogo (tipologia, portata, autonomia stimata, tempo di raggiungimento)
+end
+
+deactivate Modulo
+
+@enduml

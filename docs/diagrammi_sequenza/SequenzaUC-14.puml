@@ -1,0 +1,55 @@
+@startuml sd_PianificareManutenzioneFlotta
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Operatore del Servizio" as Operatore
+participant ":Dashboard" as Modulo <<Boundary>>
+participant ":AdminManager" as AdminManager <<Control>>
+participant ":Veicolo" as Veicolo <<Entity>>
+
+Operatore -> Modulo : Richiede visualizzazione elenco veicoli da manutenere
+activate Modulo
+
+Modulo -> AdminManager : visualizzaVeicoliDaManutenere(filtriIniziali)
+activate AdminManager
+
+alt Errore nel recupero dei dati (Anomalia di sistema)
+    AdminManager --> Modulo : errore ("Impossibile recuperare lo stato dei veicoli")
+    Modulo --> Operatore : Notifica errore di sistema e interrompe la procedura
+else Recupero completato con successo
+    
+    ' INIZIO CICLO: Iterazione su tutti i veicoli per popolare l'elenco
+    loop per ogni veicolo nella flotta
+        AdminManager -> Veicolo : statoOperativo, livelloCaricaResidua
+        activate Veicolo
+        Veicolo --> AdminManager : datiVeicolo
+        deactivate Veicolo
+    end
+    
+    alt Elenco veicoli critici vuoto
+        AdminManager --> Modulo : listaVuota
+        Modulo --> Operatore : Mostra elenco vuoto e conferma lo stato ottimale della flotta
+    else Presenza di veicoli con criticità
+        AdminManager --> Modulo : elencoVeicoliDaManutenere
+        deactivate AdminManager
+        
+        Modulo --> Operatore : Mostra elenco combinato (guasti e batterie critiche)
+        
+        ' Seconda fase: l'operatore applica i filtri sulla griglia
+        Operatore -> Modulo : Applica filtri di ricerca
+        
+        Modulo -> AdminManager : visualizzaVeicoliDaManutenere(filtriSelezionati)
+        activate AdminManager
+        AdminManager --> Modulo : elencoFiltrato
+        deactivate AdminManager
+        
+        Modulo --> Operatore : Aggiorna la visualizzazione dell'elenco in base ai filtri
+    end
+end
+
+deactivate Modulo
+
+@enduml

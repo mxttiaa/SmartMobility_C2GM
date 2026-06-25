@@ -1,0 +1,67 @@
+@startuml sd_PianificareDistribuzioneFlotta
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Operatore del Servizio" as Operatore
+participant ":Dashboard" as Modulo <<Boundary>>
+actor "Maps & GPS Service" as MapsService <<External Service>>
+participant ":AdminManager" as AdminManager <<Control>>
+participant ":Veicolo" as Veicolo <<Entity>>
+
+Operatore -> Modulo : Richiede visualizzazione cartografia globale flotta
+activate Modulo
+
+' Il sistema interroga il servizio esterno per la mappa
+Modulo -> MapsService : caricaMappaUrbana()
+activate MapsService
+MapsService --> Modulo : mappaBase
+deactivate MapsService
+
+' Il sistema recupera i dati della flotta interrogando il controller esistente
+Modulo -> AdminManager : getStatoFlottaGlobale()
+activate AdminManager
+
+alt Dati flotta non recuperabili
+    AdminManager --> Modulo : errore ("Dati non disponibili")
+    Modulo --> Operatore : Mostra messaggio di errore e interrompe pianificazione
+else Dati recuperati con successo
+    
+    ' INIZIO LOOP: L'AdminManager interroga ciclicamente ogni veicolo della flotta
+    loop per ogni veicolo nella flotta
+        AdminManager -> Veicolo : coordinateAttuali
+        activate Veicolo
+        Veicolo --> AdminManager : posizione
+        deactivate Veicolo
+    end
+
+    AdminManager --> Modulo : listaVeicoli (posizione e stato operativo)
+    deactivate AdminManager
+    
+    Modulo -> Modulo : elaboraAreeCritiche(listaVeicoli)
+    
+    Modulo --> Operatore : Mostra cartografia evidenziando zone critiche
+    
+    ' L'operatore analizza e definisce il piano
+    Operatore -> Modulo : Seleziona area e definesse direttive (criteri)
+    
+    ' Sfruttiamo il metodo esistente generaReportStatistico dell'AdminManager
+    Modulo -> AdminManager : generaReportStatistico(direttiveRedistribuzione)
+    activate AdminManager
+    
+    ' Creazione dell'entità ReportStatistico che funge da piano
+    participant "pianoRedistribuzione\n: ReportStatistico" as Report <<Entity>>
+    create Report 
+    AdminManager -> Report : <<create>> (direttiveRedistribuzione) 
+    
+    AdminManager --> Modulo : reportGenerato (confermaSalvataggio)
+    deactivate AdminManager
+    
+    Modulo --> Operatore : Conferma salvataggio del piano
+end
+
+deactivate Modulo
+
+@enduml

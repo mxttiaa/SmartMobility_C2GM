@@ -1,0 +1,73 @@
+@startuml sd_EsplorareMappa
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+actor "Maps & GPS Service" as MapsService <<External Service>>
+participant ":BookingManager" as BookingManager <<Control>>
+participant ":AdminManager" as AdminManager <<Control>>
+participant ":Veicolo" as Veicolo <<Entity>>
+
+Utente -> Modulo : Accede alla schermata principale
+activate Modulo
+
+Modulo -> MapsService : rilevaCoordinateAttuali()
+activate MapsService
+
+alt Segnale GPS assente o disattivato
+    MapsService --> Modulo : errore
+    Modulo --> Utente : Notifica assenza segnale e applica posizione predefinita
+else Segnale GPS presente
+    MapsService --> Modulo : coordinate (Posizione)
+    deactivate MapsService
+end
+
+Modulo -> BookingManager : getVeicoliEStazioni(coordinate)
+activate BookingManager
+
+' INIZIO LOOP: Lettura coordinate e stato di ogni veicolo nei dintorni
+loop per ogni veicolo nei dintorni
+    BookingManager -> Veicolo : coordinateAttuali, statoOperativo
+    activate Veicolo
+    Veicolo --> BookingManager : datiVeicolo
+    deactivate Veicolo
+end
+
+BookingManager --> Modulo : listaVeicoli, listaStazioni
+deactivate BookingManager
+
+Modulo -> AdminManager : getZoneInterdette(coordinate)
+activate AdminManager
+AdminManager --> Modulo : listaZone (RegoleUrbane)
+deactivate AdminManager
+
+alt Nessun veicolo disponibile
+    Modulo --> Utente : Mostra mappa senza veicoli con messaggio informativo
+else Veicoli disponibili
+    Modulo --> Utente : Mostra mappa interattiva con tutti gli indicatori
+end
+
+' Seconda fase: l'utente applica filtri
+Utente -> Modulo : Imposta raggio e filtri di ricerca
+Modulo -> BookingManager : getVeicoliEStazioni(coordinate, raggio, filtri)
+activate BookingManager
+
+' INIZIO LOOP: Verifica dei filtri applicati su ciascun mezzo
+loop per ogni veicolo nei dintorni
+    BookingManager -> Veicolo : coordinateAttuali, statoOperativo
+    activate Veicolo
+    Veicolo --> BookingManager : datiVeicolo
+    deactivate Veicolo
+end
+
+BookingManager --> Modulo : listaVeicoliFiltrata
+deactivate BookingManager
+
+Modulo --> Utente : Aggiorna visualizzazione mappa
+deactivate Modulo
+
+@enduml

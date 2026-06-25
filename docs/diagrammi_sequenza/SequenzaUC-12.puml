@@ -1,0 +1,65 @@
+@startuml sd_ConfigurareRegoleUrbane
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Amministrazione Pubblica" as Amministrazione
+participant ":DashboardPA" as Modulo <<Boundary>>
+actor "Maps & GPS Service" as MapsService <<External Service>>
+participant ":AdminManager" as AdminManager <<Control>>
+
+' 1. Richiesta inserimento
+Amministrazione -> Modulo : Richiede inserimento nuova regola urbana
+activate Modulo
+
+' 2. Caricamento mappa dal servizio esterno
+Modulo -> MapsService : caricaMappaAggiornata()
+activate MapsService
+MapsService --> Modulo : mappaBase
+deactivate MapsService
+
+' 3. Visualizzazione mappa
+Modulo --> Amministrazione : Mostra Mappa interattiva
+
+' 4. Tracciato
+Amministrazione -> Modulo : Traccia perimetro dell'area interessata
+Modulo --> Amministrazione : Evidenzia area tracciata sulla mappa
+
+' 5. Inserimento parametri
+Amministrazione -> Modulo : Seleziona tipo restrizione e parametri (date, limiti)
+Modulo --> Amministrazione : Aggiorna i campi del modulo
+
+' 6. Conferma
+Amministrazione -> Modulo : Conferma la configurazione
+
+Modulo -> AdminManager : configuraNuovaRegola(perimetro, tipo, parametri)
+activate AdminManager
+
+' 7. Validazione dei confini e dei parametri
+AdminManager -> AdminManager : validaParametriEConfini()
+
+alt Dati invalidi o incompleti
+    ' Deviazione al passo 7
+    AdminManager --> Modulo : errore ("Dati non validi")
+    Modulo --> Amministrazione : Segnala errore e richiede correzione dei dati
+else Dati validi
+    ' 8. Creazione e registrazione della regola operativa
+    participant "nuovaRegola\n: RegolaUrbana" as Regola <<Entity>>
+    create Regola
+    AdminManager -> Regola : <<create>> (tipo, perimetro, parametri)
+    
+    ' Metodo specifico definito nel diagramma delle classi
+    AdminManager -> AdminManager : aggiungiRegolaUrbana(nuovaRegola)
+    
+    AdminManager --> Modulo : confermaRegistrazione
+    deactivate AdminManager
+    
+    ' 9. Conferma all'utente
+    Modulo --> Amministrazione : Conferma registrazione della regola urbana
+end
+
+deactivate Modulo
+
+@enduml

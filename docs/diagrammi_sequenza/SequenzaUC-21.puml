@@ -1,0 +1,33 @@
+@startuml sd_AssegnareCreditiBonus
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+participant ":BookingManager" as BookingManager <<Control>>
+participant ":UserManager" as UserManager <<Control>>
+participant ":Account" as Account <<Entity>>
+
+' Innesco automatico all'interno del BookingManager durante la chiusura del noleggio
+BookingManager -> BookingManager : rilevaAreaPrioritaria()
+activate BookingManager
+
+BookingManager -> BookingManager : calcolaAmmontareBonus()
+
+' Delega l'aggiornamento del profilo al controller preposto
+BookingManager -> UserManager : assegnaCreditiBonus(account, ammontare)
+activate UserManager
+
+UserManager -> Account : applicaCreditiBonus(ammontare)
+activate Account
+deactivate Account
+
+UserManager --> BookingManager : esitoPositivo
+deactivate UserManager
+
+' Il BookingManager termina l'esecuzione dell'estensione e restituisce 
+' il controllo (e il valore del bonus) al flusso principale UC-05
+deactivate BookingManager
+
+@enduml

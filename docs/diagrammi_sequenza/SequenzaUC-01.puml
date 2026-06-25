@@ -1,0 +1,59 @@
+@startuml sd_RegistrareAccount
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+' Nasconde le ripetizioni degli elementi alla fine delle lifeline
+hide footbox
+
+actor "Utente" as Utente
+participant ":ModuloRegistrazione" as Modulo <<Boundary>>
+participant ":UserManager" as UserManager <<Control>>
+
+Utente -> Modulo : Inserisce dati (nome, cognome, email)
+activate Modulo
+
+Modulo -> UserManager : registraAccount(nome, cognome, email)
+activate UserManager
+
+alt Email già esistente
+    UserManager --> Modulo : errore ("Email già in uso")
+    Modulo --> Utente : mostra messaggio di errore
+else Email disponibile
+    participant "nuovoAccount\n: Account" as Account <<Entity>>
+    create Account
+    UserManager -> Account : <<create>> (nome, cognome, email, stato=DA_VERIFICARE)
+    
+    UserManager -> UserManager : inviaCodiceVerifica(email, codice)
+    activate UserManager
+    deactivate UserManager
+    
+    UserManager --> Modulo : account
+    deactivate UserManager
+    
+    Modulo --> Utente : mostra schermata inserimento codice
+    deactivate Modulo
+
+    Utente -> Modulo : Inserisce codice di verifica
+    activate Modulo
+    
+    Modulo -> UserManager : convalidaCodice(account, codice)
+    activate UserManager
+    
+    alt Codice errato o scaduto
+        UserManager --> Modulo : false
+        Modulo --> Utente : mostra errore ("Codice non valido")
+    else Codice valido
+        UserManager -> Account : impostaStato(ATTIVO)
+        activate Account
+        deactivate Account
+        
+        UserManager --> Modulo : true
+        deactivate UserManager
+        
+        Modulo --> Utente : mostra conferma avvenuta registrazione
+        deactivate Modulo
+    end
+end
+
+@enduml

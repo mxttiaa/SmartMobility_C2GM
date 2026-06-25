@@ -1,0 +1,66 @@
+@startuml Diagramma_Componenti_Macro
+skinparam monochrome true
+skinparam componentStyle uml2
+
+' --- PRESENTATION TIER ---
+component "Presentation Tier" <<component>> as PT {
+  component "Area Utente" as AU
+  component "Dashboard" as Dash
+  component "Area Supporto" as AS
+}
+
+' --- INTERFACCE (Livello 1) ---
+interface "IUserServices" as IUS
+interface "IAdminServices" as IAS
+
+' --- BUSINESS LOGIC TIER ---
+component "Business Logic Tier" <<component>> as BLT {
+  component "User Manager" as UM
+  component "Booking Manager" as BM
+  component "Pricing Manager" as PM
+  component "Communication Manager" as CM
+  component "Logic Service" as LS
+  component "Admin Manager" as AM
+}
+
+' --- INTERFACCE (Livello 2) ---
+interface "IDataAccess" as IDA
+
+' --- INTEGRATION TIER ---
+component "Integration Tier" <<component>> as IT {
+  component "Data Access Service" as DAS
+  component "Fleet Gateway" as FG
+}
+
+' --- INTERFACCE (Livello 3) ---
+interface "IPayment" as IPAY
+interface "IMaps" as IMAPS
+interface "IDatabase" as IDB
+
+' --- ESTERNI E DB ---
+component "Payment Gateway" <<external service>> as ExtPay
+component "Maps & GPS Service" <<external service>> as ExtMaps
+database "DBMS MySQL" <<component>> as DB
+
+' --- RELAZIONI ---
+' Livello Presentation -> Business
+PT ..> IUS : <<use>>
+PT ..> IAS : <<use>>
+
+IUS -- BLT
+IAS -- BLT
+
+' Livello Business -> Integration
+BLT ..> IDA : <<use>>
+IDA -- IT
+
+' Livello Integration -> Esterni
+IT ..> IPAY : <<use>>
+IT ..> IMAPS : <<use>>
+IT ..> IDB : <<use>>
+
+IPAY -- ExtPay
+IMAPS -- ExtMaps
+IDB -- DB
+
+@enduml

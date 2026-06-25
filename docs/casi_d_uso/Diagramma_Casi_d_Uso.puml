@@ -1,0 +1,80 @@
+@startuml SmartMobility
+left to right direction
+
+' --- ATTORI PRIMARI (a sinistra) ---
+actor "Utente" as U
+actor "Amministrazione\nPubblica" as AP
+actor "Operatore del\nServizio" as OS
+
+' --- ATTORI SECONDARI (a destra) ---
+actor "Identity Provider\nEsterno" as IdP
+actor "Sistema di\nPagamento" as SP
+actor "Maps & GPS\nService" as GPS
+
+rectangle "Smart Mobility" {
+  
+  usecase "RegistrareAccount" as UC1
+  usecase "EsplorareMappa" as UC2
+  usecase "ConsultareDettagliMezzo" as UC3
+  usecase "PrenotareMezzo\n--\nextension points\nscadenzaPrenotazione" as UC4
+  usecase "GestireNoleggio\n--\nextension points\nchiusuraNoleggio" as UC5
+  usecase "CalcolarePercorso" as UC6
+  usecase "GestireMetodiPagamento" as UC7
+  usecase "GestirePromozioni" as UC8
+  usecase "RichiedereAssistenza" as UC9
+  usecase "SegnalareGuasto" as UC10
+  
+  usecase "AnalizzareStatisticheMobilità" as UC11
+  usecase "ConfigurareRegoleUrbane" as UC12
+  
+  usecase "PianificareDistribuzioneFlotta" as UC13
+  usecase "PianificareManutenzioneFlotta" as UC14
+  usecase "MonitorareFlotta" as UC15
+  usecase "GestireSicurezzaMezzi" as UC16
+  usecase "GestireTicketSupporto" as UC17
+  usecase "GestireAccountUtenti" as UC18
+
+  usecase "AutenticareUtente" as UC19
+  usecase "InviareNotificaScadenza" as UC20
+  usecase "AssegnareCreditiBonus" as UC21
+}
+
+' --- ASSOCIAZIONI ATTORI PRIMARI ---
+U -- UC1
+U -- UC2
+U -- UC3
+U -- UC4
+U -- UC5
+U -- UC6
+U -- UC7
+U -- UC8
+U -- UC9
+U -- UC10
+
+AP -- UC11
+AP -- UC12
+
+OS -- UC13
+OS -- UC14
+OS -- UC15
+OS -- UC16
+OS -- UC17
+OS -- UC18
+
+' --- ASSOCIAZIONI ATTORI SECONDARI ---
+UC1 -- IdP
+UC7 -- SP
+
+UC2 -- GPS
+UC6 -- GPS
+UC12 -- GPS
+UC15 -- GPS
+
+' --- RELAZIONI DI INCLUSIONE E ESTENSIONE ---
+UC4 ..> UC19 : <<include>>
+UC5 ..> UC19 : <<include>>
+
+UC20 ..> UC4 : <<extend>>\n{condizione: tempo_residuo == soglia_impostata}
+UC21 ..> UC5 : <<extend>>\n{condizione: posizione == area_designata}
+
+@enduml

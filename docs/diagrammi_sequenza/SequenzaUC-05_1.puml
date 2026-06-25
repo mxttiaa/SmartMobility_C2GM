@@ -1,0 +1,53 @@
+@startuml sd_GestireNoleggio_Sosta
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":BookingManager" as BookingManager <<Control>>
+participant "noleggioCorrente\n: Noleggio" as Noleggio <<Entity>>
+participant ":Veicolo" as Veicolo <<Entity>>
+
+' 1-3. Sospensione temporanea
+Utente -> Modulo : Richiede sospensione temporanea del noleggio
+activate Modulo
+
+Modulo -> BookingManager : mettiInPausa(noleggioCorrente)
+activate BookingManager
+
+BookingManager -> Noleggio : sospendi()
+activate Noleggio
+deactivate Noleggio
+
+BookingManager -> Veicolo : blocca()
+activate Veicolo
+deactivate Veicolo
+
+BookingManager --> Modulo : confermaSospensione
+deactivate BookingManager
+
+Modulo --> Utente : Conferma veicolo bloccato (noleggio in corso)
+
+' 4-6. Ripresa del noleggio
+Utente -> Modulo : Richiede ripresa del noleggio
+Modulo -> BookingManager : riprendi()
+activate BookingManager
+
+BookingManager -> Noleggio : riprendi()
+activate Noleggio
+deactivate Noleggio
+
+BookingManager -> Veicolo : sblocca()
+activate Veicolo
+deactivate Veicolo
+
+BookingManager --> Modulo : confermaRipresa
+deactivate BookingManager
+
+Modulo --> Utente : Conferma sblocco e ripresa tragitto
+deactivate Modulo
+
+@enduml

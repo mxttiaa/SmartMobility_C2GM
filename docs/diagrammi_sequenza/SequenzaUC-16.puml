@@ -1,0 +1,73 @@
+@startuml sd_GestireSicurezzaVeicoli
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+' Spostiamo l'AdminManager a sinistra di tutti per evitare l'incrocio delle frecce
+participant ":AdminManager" as AdminManager <<Control>>
+actor "Operatore del Servizio" as Operatore
+participant ":Dashboard" as Modulo <<Boundary>>
+participant ":Veicolo" as Veicolo <<Entity>>
+
+alt Scenario Principale: Rilevamento Movimento Sospetto
+
+    ' Ora la freccia parte dal bordo e incontra subito l'AdminManager in modo pulito
+    [-> AdminManager : Rilevamento movimento senza noleggio attivo
+    activate AdminManager
+    AdminManager -> AdminManager : gestisciAllarmeSicurezza(veicolo)
+    AdminManager --> Modulo : notificaAllarmeMovimento(veicolo)
+    deactivate AdminManager
+    
+    activate Modulo
+    Modulo --> Operatore : Mostra avviso di sicurezza su mappa
+    deactivate Modulo
+
+    ' L'Operatore accede e visualizza i dettagli
+    Operatore -> Modulo : Seleziona notifica e richiede dettagli veicolo
+    activate Modulo
+    Modulo -> AdminManager : getStatoMonitoraggioFlotta()
+    activate AdminManager
+    AdminManager --> Modulo : dettagliVeicolo
+    deactivate AdminManager
+    Modulo --> Operatore : Visualizza dettagli del veicolo in movimento
+
+    ' L'operatore invia il comando di blocco remoto
+    Operatore -> Modulo : Invia comando di blocco remoto
+    Modulo -> AdminManager : forzaBloccoRemoto(veicolo)
+    activate AdminManager
+
+    ' Il sistema esegue il blocco
+    AdminManager -> Veicolo : blocca()
+    activate Veicolo
+
+    alt Post-condizione di Fallimento: Errore di comunicazione
+        Veicolo --> AdminManager : errore
+        AdminManager --> Modulo : errore ("Impossibile raggiungere il veicolo")
+        Modulo --> Operatore : Notifica fallimento del blocco remoto
+    else Post-condizione di Successo: Messa in sicurezza
+        Veicolo --> AdminManager : confermaStatoBloccato
+        deactivate Veicolo
+        AdminManager --> Modulo : confermaMessaInSicurezza
+        deactivate AdminManager
+        Modulo --> Operatore : Conferma avvenuto blocco del veicolo
+    end
+
+else Deviazione: Tentativo Sosta Non Consentita
+
+    ' Anche qui la freccia non taglia nessuno
+    [-> AdminManager : Tentativo terminazione noleggio fuori area consentita
+    activate AdminManager
+    AdminManager -> AdminManager : gestisciAllarmeSicurezza(veicolo)
+    
+    AdminManager --> Modulo : notificaSostaNonConsentita(veicolo)
+    deactivate AdminManager
+    
+    Modulo --> Operatore : Registra l'evento e lo rende disponibile nella dashboard
+
+end
+
+deactivate Modulo
+
+@enduml

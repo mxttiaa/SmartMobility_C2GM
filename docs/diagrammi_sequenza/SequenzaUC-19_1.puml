@@ -1,0 +1,40 @@
+@startuml sd_AutenticareUtenteRapida
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+' Nasconde le ripetizioni degli elementi alla fine delle lifeline
+hide footbox
+
+actor "Utente" as Utente
+participant ":ModuloAutenticazione" as Modulo <<Boundary>>
+actor "Identity Provider\nEsterno" as Provider <<External Service>>
+participant ":UserManager" as UserManager <<Control>>
+
+Utente -> Modulo : Richiede accesso
+activate Modulo
+Modulo --> Utente : Mostra modulo di autenticazione
+
+Utente -> Modulo : Seleziona opzione di autenticazione rapida
+
+Modulo -> Provider : Trasferisce l'Utente per autenticazione
+activate Provider
+
+Provider --> Utente : Mostra schermata di login del provider
+activate Utente
+Utente --> Provider : Si autentica presso il provider
+deactivate Utente
+
+Provider --> Modulo : Invia conferma di validazione e token/dati
+deactivate Provider
+
+Modulo -> UserManager : autenticaConProvider(token)
+activate UserManager
+
+UserManager --> Modulo : true (Account autenticato)
+deactivate UserManager
+
+Modulo --> Utente : Account Autenticato
+deactivate Modulo
+
+@enduml

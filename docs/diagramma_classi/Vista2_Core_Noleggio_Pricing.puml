@@ -1,0 +1,123 @@
+@startuml Vista_Core_Noleggio_Pricing
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+hide circle
+
+' --- ENUMERAZIONI ---
+enum StatoPrenotazione {
+  ATTIVA
+  SCADUTA
+  CONVERTITA
+}
+
+enum StatoNoleggio {
+  IN_CORSO
+  IN_PAUSA
+  TERMINATO
+}
+
+enum StatoVeicolo {
+  DISPONIBILE
+  IN_USO
+  IN_MANUTENZIONE
+  BATTERIA_SCARICA
+}
+
+' --- CLASSI DI DOMINIO (COLLANTE E CORE) ---
+class Account {
+  - nome: String
+  - cognome: String
+  - email: String
+  - saldoCreditiBonus: double
+  - stato: StatoAccount
+}
+
+class Prenotazione {
+  - destinazione: String
+  - istanteCreazione: DateTime
+  - durataMassima: int
+  - costoStimato: double
+  - stato: StatoPrenotazione
+  + isScaduta(): boolean
+}
+
+class Noleggio {
+  - inizioNoleggio: DateTime
+  - fineNoleggio: DateTime
+  - costoFinale: double
+  - stato: StatoNoleggio
+  + sospendi(): void
+  + riprendi(): void
+  + termina(): void
+}
+
+abstract class Veicolo {
+  - codiceIdentificativo: String
+  - livelloCaricaResidua: float
+  - portataMassima: float
+  - statoOperativo: StatoVeicolo
+  - coordinateAttuali: Posizione
+  + getAutonomiaStimata(): float
+  + sblocca(): void
+  + blocca(): void
+  + aggiornaPosizione(nuovaPosizione: Posizione): void
+}
+
+class Automobile {
+  - targa: String
+  - numeroPosti: int
+}
+
+class Monopattino {
+  - velocitaMassima: int
+}
+
+class Bicicletta {
+  - pedalataAssistita: boolean
+}
+
+class Tariffa {
+  - costoSblocco: double
+  - costoAlMinuto: double
+  - tipologiaVeicolo: String
+}
+
+' --- CLASSI DI CONTROLLO ---
+class BookingManager {
+  + prenotaVeicolo(account: Account, veicolo: Veicolo, destinazione: String): Prenotazione
+  + avviaNoleggio(account: Account, veicolo: Veicolo): Noleggio
+  + mettiInPausa(noleggio: Noleggio): void
+  + concludiNoleggio(noleggio: Noleggio): void
+}
+
+class PricingManager {
+  + calcolaPreventivo(tariffa: Tariffa, distanza: float): double
+  + calcolaCostoTotale(noleggio: Noleggio, tariffa: Tariffa): double
+}
+
+' --- RELAZIONI E LAYOUT FORZATO ---
+
+' Gerarchia Veicoli (in basso)
+Veicolo <|-down- Automobile
+Veicolo <|-down- Monopattino
+Veicolo <|-down- Bicicletta
+
+' Interazioni dei Manager (dall'alto verso il basso)
+BookingManager -right-> PricingManager : delega calcolo
+BookingManager -down-> Prenotazione : gestisce
+BookingManager -down-> Noleggio : gestisce
+
+PricingManager -down-> Tariffa : utilizza
+PricingManager -down-> Prenotazione : elabora
+PricingManager -down-> Noleggio : elabora
+
+' Azioni dell'Account (da sinistra a destra)
+Account "1" -right- "0..*" Prenotazione : effettua
+Account "1" -down- "0..*" Noleggio : attiva
+
+' Relazioni tra le entità core
+Prenotazione "0..1" -down- "0..*" Noleggio : genera
+Prenotazione "*" -right- "1..*" Veicolo : riserva
+Noleggio "*" -right- "1" Veicolo : utilizza
+
+@enduml

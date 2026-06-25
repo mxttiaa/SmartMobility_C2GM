@@ -1,0 +1,42 @@
+@startuml sd_RegistrareAccountRapida
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+' Nasconde le ripetizioni degli elementi alla fine delle lifeline
+hide footbox
+
+actor "Utente" as Utente
+participant ":ModuloRegistrazione" as Modulo <<Boundary>>
+actor "Identity Provider\nEsterno" as Provider <<External Service>>
+participant ":UserManager" as UserManager <<Control>>
+
+Utente -> Modulo : Seleziona registrazione rapida
+activate Modulo
+
+Modulo -> Provider : Reindirizza per autenticazione e richiesta dati
+activate Provider
+
+Provider --> Utente : Mostra schermata di login esterno e richiesta consenso
+activate Utente
+Utente --> Provider : Inserisce credenziali e autorizza la condivisione
+deactivate Utente
+
+Provider --> Modulo : Restituisce dati profilo (nome, cognome, email)
+deactivate Provider
+
+Modulo -> UserManager : registraAccount(nome, cognome, email)
+activate UserManager
+
+' L'identità è verificata dal provider esterno: l'account nasce direttamente ATTIVO
+participant "nuovoAccount\n: Account" as Account <<Entity>>
+create Account
+UserManager -> Account : <<create>> (nome, cognome, email, stato=ATTIVO)
+
+UserManager --> Modulo : account
+deactivate UserManager
+
+Modulo --> Utente : mostra conferma avvenuta registrazione
+deactivate Modulo
+
+@enduml

@@ -1,0 +1,32 @@
+@startuml sd_AutenticareUtente
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+' Nasconde le ripetizioni degli elementi alla fine delle lifeline
+hide footbox
+
+actor "Utente" as Utente
+participant ":ModuloAutenticazione" as Modulo <<Boundary>>
+participant ":UserManager" as UserManager <<Control>>
+
+Utente -> Modulo : Richiede accesso
+activate Modulo
+Modulo --> Utente : Mostra modulo di autenticazione
+
+Utente -> Modulo : Inserisce credenziali e conferma
+Modulo -> UserManager : verificaCredenziali(email, password)
+activate UserManager
+
+alt Credenziali non valide
+    UserManager --> Modulo : false
+    Modulo --> Utente : Notifica errore e suggerisce registrazione o riprova
+else Credenziali valide
+    UserManager --> Modulo : true (Account autenticato)
+    deactivate UserManager
+    
+    Modulo --> Utente : Account Autenticato
+    deactivate Modulo
+end
+
+@enduml

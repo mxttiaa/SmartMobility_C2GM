@@ -1,0 +1,50 @@
+@startuml sd_CalcolarePercorso
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":LogicService" as LogicService <<Control>>
+participant ":AdminManager" as AdminManager <<Control>>
+actor "Maps & GPS Service" as MapsService <<External Service>>
+
+Utente -> Modulo : Indica la destinazione da raggiungere
+activate Modulo
+
+Modulo -> LogicService : calcolaPercorsoOttimale(posizioneAttuale, destinazione)
+activate LogicService
+
+' Il sistema interroga il servizio esterno per le rotte base
+LogicService -> MapsService : generaPercorsiPossibili(posizioneAttuale, destinazione)
+activate MapsService
+MapsService --> LogicService : listaPercorsi
+
+' Il sistema recupera i vincoli urbani dal controller di competenza
+LogicService -> AdminManager : getZoneInterdette()
+activate AdminManager
+AdminManager --> LogicService : regoleAttive (ZTL e manutenzione)
+deactivate AdminManager
+
+' Il sistema passa i vincoli al servizio per il ricalcolo
+LogicService -> MapsService : ricalcolaConVincoli(listaPercorsi, regoleAttive)
+
+alt Nessun percorso accessibile
+    MapsService --> LogicService : errore ("Nessun percorso trovato")
+    LogicService --> Modulo : eccezione
+    Modulo --> Utente : Notifica impossibilità e invita a scegliere altra destinazione
+else Percorso validato e ottimale
+    MapsService --> LogicService : percorsoOttimale
+    deactivate MapsService
+    
+    LogicService --> Modulo : percorso (include coordinateTragitto)
+    deactivate LogicService
+    
+    Modulo --> Utente : Mostra il percorso ottimizzato sulla mappa
+end
+
+deactivate Modulo
+
+@enduml

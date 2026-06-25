@@ -1,0 +1,26 @@
+@startuml sd_InviareNotificaScadenza
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+' Nasconde le ripetizioni degli elementi alla fine delle lifeline
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":BookingManager" as BookingManager <<Control>>
+
+' Il timer interno al controller innesca l'azione
+BookingManager -> BookingManager : rilevaScadenzaImminente()
+activate BookingManager
+
+BookingManager -> BookingManager : generaPromemoriaScadenza()
+
+BookingManager -> Modulo : inviaNotifica(dettagliVeicolo, tempoResiduo)
+deactivate BookingManager
+activate Modulo
+
+Modulo --> Utente : Mostra notifica promemoria scadenza
+deactivate Modulo
+
+@enduml

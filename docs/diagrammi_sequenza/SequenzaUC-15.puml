@@ -1,0 +1,69 @@
+@startuml sd_MonitorareFlotta
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Operatore del Servizio" as Operatore
+participant ":Dashboard" as Modulo <<Boundary>>
+actor "Maps & GPS Service" as MapsService <<External Service>>
+participant ":AdminManager" as AdminManager <<Control>>
+participant ":Veicolo" as Veicolo <<Entity>>
+participant ":Prenotazione" as Prenotazione <<Entity>>
+
+Operatore -> Modulo : Richiede visualizzazione mappa di monitoraggio
+activate Modulo
+
+' Caricamento cartografia esterna
+Modulo -> MapsService : caricaMappaUrbana()
+activate MapsService
+MapsService --> Modulo : mappaBase
+deactivate MapsService
+
+Modulo -> AdminManager : getStatoMonitoraggioFlotta()
+activate AdminManager
+
+' Ciclo di lettura telemetria e controllo anomalie su tutta la flotta
+loop per ogni veicolo nella flotta
+    AdminManager -> Veicolo : coordinateAttuali, statoOperativo
+    activate Veicolo
+    Veicolo --> AdminManager : datiTelemetria
+    deactivate Veicolo
+    
+    ' Gestione deviazione: Controllo sforamento tempi di prenotazione o sosta illecita
+    alt Verifica violazioni di tempo o posizione
+        AdminManager -> Prenotazione : isScaduta()
+        activate Prenotazione
+        Prenotazione --> AdminManager : true
+        deactivate Prenotazione
+        
+        AdminManager -> AdminManager : contrassegnaConAllerta()
+    end
+end
+
+AdminManager --> Modulo : datiFlottaAggiornati
+deactivate AdminManager
+
+alt Presenza di veicoli con allerta rilevati
+    Modulo --> Operatore : Mostra mappa con indicatori di stato ed evidenzia veicoli in allerta
+else Flotta regolare
+    Modulo --> Operatore : Mostra mappa interattiva con indicatori di stato standard
+end
+
+' Seconda fase: applicazione filtri
+Operatore -> Modulo : Applica filtri di ricerca (esola categorie)
+Modulo -> Modulo : filtraMappa()
+Modulo --> Operatore : Mostra esclusivamente i veicoli conformi ai filtri
+
+' Terza fase: ispezione scheda di dettaglio
+Operatore -> Modulo : Seleziona un veicolo specifico sulla cartografia
+Modulo -> AdminManager : getDettaglioMonitoraggio(codiceIdentificativo)
+activate AdminManager
+AdminManager --> Modulo : schedaInformativa (durata stato, posizione)
+deactivate AdminManager
+
+Modulo --> Operatore : Mostra scheda informativa con i dettagli del veicolo
+deactivate Modulo
+
+@enduml

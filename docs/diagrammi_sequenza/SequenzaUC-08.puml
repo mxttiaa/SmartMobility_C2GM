@@ -1,0 +1,44 @@
+@startuml sd_GestirePromozioni
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Utente" as Utente
+participant ":AreaUtente" as Modulo <<Boundary>>
+participant ":UserManager" as UserManager <<Control>>
+participant ":Promozione" as Promozione <<Entity>>
+participant ":PricingManager" as PricingManager <<Control>>
+
+Utente -> Modulo : Richiede applicazione codice promozionale o offerta
+activate Modulo
+
+Modulo -> UserManager : convalidaCodice(account, codice)
+activate UserManager
+
+UserManager -> Promozione : isValida()
+activate Promozione
+
+alt Promozione scaduta, utilizzata o non compatibile
+    Promozione --> UserManager : false
+    UserManager --> Modulo : errore ("Promozione non applicabile")
+    Modulo --> Utente : Notifica invalidità e invita a procedere con tariffa standard
+else Promozione valida
+    Promozione --> UserManager : true
+    deactivate Promozione
+    
+    UserManager --> Modulo : promozioneValidata
+    deactivate UserManager
+    
+    Modulo -> PricingManager : ricalcolaCosto(costoStimato, promozione)
+    activate PricingManager
+    PricingManager --> Modulo : nuovoImporto
+    deactivate PricingManager
+    
+    Modulo --> Utente : Mostra beneficio economico e nuovo costo stimato
+end
+
+deactivate Modulo
+
+@enduml

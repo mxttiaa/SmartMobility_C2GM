@@ -1,0 +1,86 @@
+@startuml sd_GestireSegnalazioniSupporto
+skinparam monochrome true
+skinparam responseMessageBelowArrow true
+skinparam defaultTextAlignment center
+
+hide footbox
+
+actor "Operatore del Servizio" as Operatore
+participant ":Dashboard" as Modulo <<Boundary>>
+participant ":AdminManager" as AdminManager <<Control>>
+participant ":SegnalazioneSupporto" as Segnalazione <<Entity>>
+
+' 1-2. Visualizzazione della coda
+Operatore -> Modulo : Richiede visualizzazione coda assistenza
+activate Modulo
+
+Modulo -> AdminManager : visualizzaCodaSegnalazioni()
+activate AdminManager
+
+' Ciclo per recuperare lo stato di avanzamento e i tempi di ciascuna segnalazione
+loop per ogni segnalazione in coda
+    AdminManager -> Segnalazione : stato, istanteCreazione
+    activate Segnalazione
+    Segnalazione --> AdminManager : datiSegnalazione
+    deactivate Segnalazione
+end
+
+AdminManager --> Modulo : elencoSegnalazioni
+deactivate AdminManager
+
+Modulo --> Operatore : Mostra elenco con stato e tempi di risposta
+
+' 3-4. Presa in carico
+Operatore -> Modulo : Seleziona segnalazione per prenderla in carico
+Modulo -> AdminManager : assegnaSegnalazione(operatore, segnalazione)
+activate AdminManager
+
+AdminManager -> Segnalazione : prendiInCarico()
+activate Segnalazione
+deactivate Segnalazione
+
+AdminManager --> Modulo : confermaAssegnazione
+deactivate AdminManager
+
+Modulo --> Operatore : Conferma presa in carico e aggiorna stato
+
+' 5-6. Bivio: Chiusura o Sospensione temporanea
+alt Risoluzione Immediata (Sequenza Principale)
+    
+    Operatore -> Modulo : Inserisce esito intervento e richiede chiusura
+    
+    ' Il controller fa da passacarte e invoca la chiusura sull'entità
+    Modulo -> AdminManager : aggiornaStatoSegnalazione(segnalazione, esito)
+    activate AdminManager
+    
+    AdminManager -> Segnalazione : chiudi(esito)
+    activate Segnalazione
+    deactivate Segnalazione
+    
+    AdminManager --> Modulo : confermaChiusura
+    deactivate AdminManager
+    
+    Modulo --> Operatore : Conferma risoluzione e archiviazione segnalazione
+
+else Deviazione: Sospensione temporanea per mancanza di elementi
+    
+    Operatore -> Modulo : Inserisce nota di aggiornamento e sospende
+    
+    ' Il controller inoltra la nota di sospensione all'entità
+    Modulo -> AdminManager : aggiornaStatoSegnalazione(segnalazione, nota)
+    activate AdminManager
+    
+    AdminManager -> Segnalazione : sospendi(nota)
+    activate Segnalazione
+    deactivate Segnalazione
+    
+    AdminManager --> Modulo : confermaSospensione
+    deactivate AdminManager
+    
+    Modulo --> Operatore : Conferma sospensione della segnalazione
+    
+end
+
+deactivate Modulo
+
+@enduml
