@@ -82,6 +82,21 @@ public class UserManager {
             throw new IllegalArgumentException("L'account fornito non e' valido.");
         }
         
+        // Simula la validazione con il Sistema Esterno (es. controlliamo che abbia 16 cifre prima della scadenza)
+        boolean validazioneEsterna = true;
+        if (datiCarta != null) {
+            String numero = datiCarta.split("\\|")[0];
+            if (numero.length() < 16) {
+                validazioneEsterna = false;
+            }
+        } else {
+            validazioneEsterna = false;
+        }
+
+        if (!validazioneEsterna) {
+            throw new IllegalArgumentException("Validazione fallita presso il Sistema di Pagamento. Controlla il numero della carta.");
+        }
+
         MetodoPagamento metodo = new MetodoPagamento(datiCarta);
         if (metodo.isValido()) {
             account.setMetodoPagamento(metodo);

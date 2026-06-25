@@ -12,8 +12,10 @@
 
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
+        <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE" class="active">Prenota Veicolo</a>
         <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="pagamento.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Pagamenti</a>
+        <a href="assistenza.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Assistenza</a>
         <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
         <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
     </nav>
@@ -44,6 +46,20 @@
             </svg>
         </div>
 
+        <div class="input-group">
+            <input type="number" id="durataStimata" placeholder=" " min="1" required autocomplete="off">
+            <label for="durataStimata">Durata stimata (minuti)</label>
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+        </div>
+
+        <button id="preventivoBtn" onclick="calcolaPreventivo()" style="background: rgba(255,255,255,0.1); color: white; margin-bottom: 10px;">
+            <span>Calcola Preventivo</span>
+        </button>
+        <div id="preventivoResult" style="display: none; text-align: center; color: var(--primary); font-size: 1.2rem; margin-bottom: 15px; font-weight: bold;"></div>
+
         <button id="bookBtn" onclick="prenotaVeicolo()">
             <span id="btnText">Prenota Ora</span>
             <div id="btnLoader" class="loader"></div>
@@ -68,6 +84,31 @@
                 codiceInput.style.borderColor = 'var(--primary)';
             }
         };
+
+        async function calcolaPreventivo() {
+            const codiceVeicolo = document.getElementById('codiceVeicolo').value.trim();
+            const durata = document.getElementById('durataStimata').value.trim();
+            const preventivoResult = document.getElementById('preventivoResult');
+
+            if (!codiceVeicolo || !durata) {
+                showResponse('error', 'Inserisci codice veicolo e durata per il preventivo.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/preventivo?codiceVeicolo=${codiceVeicolo}&durata=${durata}`);
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    preventivoResult.style.display = 'block';
+                    preventivoResult.textContent = `Costo Stimato: €${data.preventivo.toFixed(2)}`;
+                } else {
+                    showResponse('error', `Errore preventivo: ${data.message}`);
+                }
+            } catch (error) {
+                showResponse('error', 'Errore di connessione per il calcolo preventivo.');
+            }
+        }
 
         async function prenotaVeicolo() {
             // Lettura valori dagli input
@@ -113,8 +154,11 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    // Gestione esplicita di errori 400/500 provenienti dal backend
-                    showResponse('error', `✖ Errore: ${data.message || 'Veicolo non disponibile o operazione fallita'}`);
+                    if (data.message && data.message.includes('Metodo di pagamento mancante')) {
+                        showResponse('error', `✖ ${data.message} Clicca su 'Pagamenti' in alto.`);
+                    } else {
+                        showResponse('error', `✖ Errore: ${data.message || 'Veicolo non disponibile o operazione fallita'}`);
+                    }
                 } else if (data.status === 'success') {
                     showResponse('success', `✔ ${data.message}`);
                 } else {

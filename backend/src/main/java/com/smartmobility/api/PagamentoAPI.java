@@ -1,6 +1,8 @@
 package com.smartmobility.api;
 
-import com.smartmobility.manager.BookingManager;
+import com.smartmobility.dao.AccountDAO;
+import com.smartmobility.manager.UserManager;
+import com.smartmobility.model.Account;
 import com.smartmobility.util.SessionManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -12,20 +14,20 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
-public class TerminaNoleggioAPI implements HttpHandler {
+public class PagamentoAPI implements HttpHandler {
 
-    private BookingManager bookingManager;
-    private String[] allowedRoles;
+    private UserManager userManager;
+    private AccountDAO accountDAO;
 
-    public TerminaNoleggioAPI(String... allowedRoles) {
-        this.bookingManager = new BookingManager();
-        this.allowedRoles = allowedRoles;
+    public PagamentoAPI() {
+        this.userManager = new UserManager();
+        this.accountDAO = new AccountDAO();
     }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        
+
         if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
             exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
             exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -37,24 +39,9 @@ public class TerminaNoleggioAPI implements HttpHandler {
         String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
         String token = SessionManager.extractToken(authHeader);
         SessionManager.SessionData session = SessionManager.getSession(token);
-        
-        if (session == null) {
-            sendResponse(exchange, 401, "{\"status\": \"error\", \"message\": \"Non autenticato: effettua il login\"}");
-            return;
-        }
 
-        boolean authorized = false;
-        if (allowedRoles != null) {
-            for (String role : allowedRoles) {
-                if (role.equals(session.getRuolo())) {
-                    authorized = true;
-                    break;
-                }
-            }
-        }
-        
-        if (!authorized) {
-            sendResponse(exchange, 403, "{\"status\": \"error\", \"message\": \"Accesso negato: ruolo non autorizzato\"}");
+        if (session == null) {
+            sendResponse(exchange, 401, "{\"status\": \"error\", \"message\": \"Non autenticato\"}");
             return;
         }
 
@@ -66,19 +53,26 @@ public class TerminaNoleggioAPI implements HttpHandler {
                     requestBody = br.lines().collect(Collectors.joining("\n"));
                 }
 
-                String email = extractJsonField(requestBody, "email");
-                String codiceVeicolo = extractJsonField(requestBody, "codiceVeicolo");
+                String datiCarta = extractJsonField(requestBody, "datiCarta");
 
-                if (email == null || codiceVeicolo == null) {
-                    sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"Campi mancanti nel JSON\"}");
+                if (datiCarta == null || datiCarta.isEmpty()) {
+                    sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"Dati carta mancanti\"}");
                     return;
                 }
 
-                double costoFinale = bookingManager.terminaNoleggio(email, codiceVeicolo);
+                Account account = accountDAO.readByEmail(session.getEmail());
+                if (account == null) {
+                    sendResponse(exchange, 404, "{\"status\": \"error\", \"message\": \"Account non trovato\"}");
+                    return;
+                }
 
-                sendResponse(exchange, 200, "{\"status\": \"success\", \"message\": \"Noleggio terminato\", \"costo_finale\": " + costoFinale + "}");
+                // Chiama userManager che a sua volta (simula) valida con SistemaPagamento e salva su DB
+                userManager.associaPagamento(account, datiCarta);
 
-            } catch (IllegalStateException e) {
+                sendResponse(exchange, 200, "{\"status\": \"success\", \"message\": \"Metodo di pagamento associato con successo\"}");
+
+            } catch (IllegalArgumentException e) {
+                // Errore di validazione (es. dati carta non validi dal Sistema Esterno)
                 sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"" + e.getMessage() + "\"}");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -93,16 +87,16 @@ public class TerminaNoleggioAPI implements HttpHandler {
         String searchStr = "\"" + field + "\"";
         int index = json.indexOf(searchStr);
         if (index == -1) return null;
-        
+
         int colonIndex = json.indexOf(":", index);
         if (colonIndex == -1) return null;
-        
+
         int quote1 = json.indexOf("\"", colonIndex);
         if (quote1 == -1) return null;
-        
+
         int quote2 = json.indexOf("\"", quote1 + 1);
         if (quote2 == -1) return null;
-        
+
         return json.substring(quote1 + 1, quote2);
     }
 

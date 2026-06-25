@@ -17,13 +17,17 @@ Il progetto utilizza un file di configurazione per evitare di condividere le pas
 ## 🚀 2. Compilazione ed Esecuzione del Backend (Java)
 Aprire un terminale nella root del progetto (la cartella principale) ed eseguire i seguenti comandi:
 
-**Per compilare il codice e i test:**
-`javac -d bin -sourcepath backend/src/main/java -cp "lib/*" test/*.java`
+**Per compilare l'intero progetto (Backend e Test):**
 
-**Per avviare i test (inclusi i driver MySQL):**
-`java -cp "bin;lib/*" test.TestUserManager`
+*Linux / macOS (Bash/Zsh):*
+`javac -d bin -sourcepath backend/src/main/java -cp "lib/*" backend/src/main/java/com/smartmobility/*/*.java test/*.java`
 
-*(Nota: per avviare il server principale in futuro, sostituire la classe di test con il Controller principale dell'applicazione).*
+*Windows (PowerShell):*
+`javac -d bin -cp "lib/*" (Get-ChildItem -Path backend\src\main\java -Filter *.java -Recurse).FullName test\*.java`
+
+**Per avviare il server principale (MainServer):**
+*Linux / macOS:* `java -cp "bin:lib/*" com.smartmobility.api.MainServer`
+*Windows:* `java -cp "bin;lib/*" com.smartmobility.api.MainServer`
 
 ## 🌐 3. Avvio del Frontend
 1. Entrare nella cartella `/frontend/`.
@@ -31,12 +35,17 @@ Aprire un terminale nella root del progetto (la cartella principale) ed eseguire
 3. Il browser si aprirà automaticamente, consentendo di testare le funzionalità dell'interfaccia.
 
 ### 🔑 Account di Test Preconfigurati
-Il database viene inizializzato con alcuni account fittizi per testare i diversi ruoli del sistema (RBAC):
+Il database viene inizializzato con account fittizi provvisti dei tre ruoli di sistema (RBAC).
+Tutti gli account di test utilizzano la password predefinita: `password123`
 
-* **Utente Standard:** (È possibile registrarne uno nuovo tramite l'interfaccia o tramite i test)
-* **Operatore del Servizio (Mappa Globale):**
-  * **Email:** `operatore@zootropolis.it`
-  * **Password:** `123456`
+* **CLIENTI (Utenti Standard):**
+  * `mario.rossi@email.it`
+  * `laura.bianchi@email.it` (Provvista di 5.0€ di crediti bonus)
+* **OPERATORI DEL SERVIZIO:**
+  * `giuseppe.verdi@email.it`
+  * `anna.neri@email.it`
+* **AMMINISTRATORE DI SISTEMA:**
+  * `admin@smartmobility.it`
 
 ---
 
@@ -96,6 +105,7 @@ Una volta che la Pull Request è stata approvata e unita (merged) nel progetto p
   `java -cp "bin;lib/*" test.TestAdminManager`
 
 * **Test di Integrazione Completo (Ciclo di vita utente):**
-  `java -cp "bin;lib/*" test.TestSistema`
+  *Linux/macOS:* `java -cp "bin:lib/*" test.TestSistema`
+  *Windows:* `java -cp "bin;lib/*" test.TestSistema`
 
 ---

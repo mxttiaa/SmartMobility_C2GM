@@ -25,4 +25,15 @@ public class PricingManager {
         
         return tariffa.getCostoSblocco() + (minutiEffettivi * tariffa.getCostoAlMinuto());
     }
+
+    public Tariffa getTariffaPerVeicolo(com.smartmobility.model.Veicolo veicolo) {
+        if (veicolo instanceof com.smartmobility.model.Bicicletta) {
+            return new Tariffa(0.50, 0.05, "Bicicletta");
+        } else if (veicolo instanceof com.smartmobility.model.Monopattino) {
+            return new Tariffa(1.00, 0.15, "Monopattino");
+        } else if (veicolo instanceof com.smartmobility.model.Automobile) {
+            return new Tariffa(2.00, 0.30, "Automobile");
+        }
+        return new Tariffa(1.00, 0.20, "Veicolo Default");
+    }
 }

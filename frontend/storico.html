@@ -185,7 +185,8 @@
                 const data = await response.json();
 
                 if (response.ok && data.status === 'success') {
-                    alert('Noleggio terminato con successo!');
+                    const costo = data.costo_finale !== undefined ? data.costo_finale.toFixed(2) : '0.00';
+                    alert(`Noleggio terminato con successo!\nCosto totale addebitato: €${costo}`);
                     caricaStorico(); // Ricarica la tabella
                 } else {
                     alert('Errore: ' + data.message);

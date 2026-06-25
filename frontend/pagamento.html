@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metodi di Pagamento - Smart Mobility</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="AuthGuard.js"></script>
+    <style>
+        body {
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            gap: 30px;
+        }
+
+        .form-container {
+            background: rgba(18, 18, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(0, 255, 136, 0.1);
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 20px;
+        }
+
+        .row-inputs .input-group {
+            flex: 1;
+        }
+
+        .submit-btn {
+            background: var(--primary);
+            color: #121214;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .card-preview {
+            background: linear-gradient(135deg, #2a2a35 0%, #1e1e24 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .card-preview::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+        }
+
+        .card-number-display {
+            font-size: 24px;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            color: white;
+        }
+
+        .card-info-display {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
+        <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="pagamento.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE" class="active">Pagamenti</a>
+        <a href="assistenza.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Assistenza</a>
+        <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
+        <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
+    </nav>
+
+    <div class="blob blob-1" style="top: -50px; left: -50px;"></div>
+    <div class="blob blob-2" style="bottom: auto; top: 200px; right: -50px;"></div>
+
+    <div class="dashboard-container">
+        
+        <div class="dashboard-title" style="text-align: center;">
+            <h1>Metodi di Pagamento</h1>
+            <p class="subtitle">Aggiungi o aggiorna la tua carta di credito</p>
+        </div>
+
+        <div class="form-container">
+            <div id="msgBanner" style="display: none; padding: 15px; border-radius: 12px; margin-bottom: 25px; text-align: center; font-weight: 500;"></div>
+
+            <div class="card-preview">
+                <div class="card-number-display" id="displayNum">•••• •••• •••• ••••</div>
+                <div class="card-info-display">
+                    <span id="displayName">NOME TITOLARE</span>
+                    <span id="displayExp">MM/YY</span>
+                </div>
+            </div>
+            
+            <form id="paymentForm" onsubmit="associaCarta(event)">
+                <div class="input-group">
+                    <label>Intestatario Carta</label>
+                    <input type="text" id="titolare" placeholder="Es. Mario Rossi" required oninput="updatePreview()">
+                </div>
+
+                <div class="input-group">
+                    <label>Numero Carta</label>
+                    <input type="text" id="numeroCarta" placeholder="0000 0000 0000 0000" maxlength="19" required oninput="formatCard(this); updatePreview()">
+                </div>
+
+                <div class="row-inputs">
+                    <div class="input-group">
+                        <label>Scadenza (MM/YY)</label>
+                        <input type="text" id="scadenza" placeholder="MM/YY" maxlength="5" required oninput="formatExpiry(this); updatePreview()">
+                    </div>
+                    <div class="input-group">
+                        <label>CVV</label>
+                        <input type="password" id="cvv" placeholder="•••" maxlength="3" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">Salva Metodo di Pagamento</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function formatCard(input) {
+            let val = input.value.replace(/\D/g, '');
+            let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+            input.value = formatted;
+        }
+
+        function formatExpiry(input) {
+            let val = input.value.replace(/\D/g, '');
+            if (val.length >= 2) {
+                val = val.substring(0, 2) + '/' + val.substring(2, 4);
+            }
+            input.value = val;
+        }
+
+        function updatePreview() {
+            const num = document.getElementById('numeroCarta').value || '•••• •••• •••• ••••';
+            const name = document.getElementById('titolare').value.toUpperCase() || 'NOME TITOLARE';
+            const exp = document.getElementById('scadenza').value || 'MM/YY';
+
+            document.getElementById('displayNum').textContent = num;
+            document.getElementById('displayName').textContent = name;
+            document.getElementById('displayExp').textContent = exp;
+        }
+
+        async function associaCarta(event) {
+            event.preventDefault();
+            
+            const numeroCarta = document.getElementById('numeroCarta').value.replace(/\s/g, '');
+            const scadenza = document.getElementById('scadenza').value;
+            const cvv = document.getElementById('cvv').value;
+            const msgBanner = document.getElementById('msgBanner');
+            const submitBtn = document.getElementById('submitBtn');
+
+            msgBanner.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Salvataggio...';
+
+            try {
+                // Prepariamo i dati carta per il backend. In uno scenario reale si userebbe uno Stripe Token
+                const datiCarta = `${numeroCarta}|${scadenza}|${cvv}`;
+
+                const response = await fetch('http://localhost:8080/api/pagamento', {
+                    method: 'POST',
+                    headers: window.getAuthJsonHeaders(),
+                    body: JSON.stringify({ datiCarta })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    msgBanner.textContent = 'Metodo di pagamento salvato con successo!';
+                    msgBanner.style.background = 'rgba(0, 255, 136, 0.1)';
+                    msgBanner.style.color = 'var(--primary)';
+                    msgBanner.style.border = '1px solid rgba(0, 255, 136, 0.3)';
+                    msgBanner.style.display = 'block';
+                    
+                    document.getElementById('paymentForm').reset();
+                    updatePreview();
+                } else {
+                    throw new Error(data.message || 'Errore durante il salvataggio');
+                }
+            } catch (error) {
+                msgBanner.textContent = error.message;
+                msgBanner.style.background = 'rgba(255, 77, 109, 0.1)';
+                msgBanner.style.color = '#ff4d6d';
+                msgBanner.style.border = '1px solid rgba(255, 77, 109, 0.3)';
+                msgBanner.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Salva Metodo di Pagamento';
+            }
+        }
+    </script>
+</body>
+</html>

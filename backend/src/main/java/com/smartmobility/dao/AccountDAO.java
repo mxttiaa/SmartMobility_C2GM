@@ -88,4 +88,21 @@ public class AccountDAO {
             System.err.println("Errore salvataggio metodo di pagamento: " + e.getMessage());
         }
     }
+
+    public boolean hasMetodoPagamento(String emailAccount) {
+        String sql = "SELECT COUNT(*) FROM metodo_pagamento WHERE account_id = (SELECT id FROM account WHERE email = ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             
+            pstmt.setString(1, emailAccount);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Errore verifica metodo di pagamento: " + e.getMessage());
+        }
+        return false;
+    }
 }

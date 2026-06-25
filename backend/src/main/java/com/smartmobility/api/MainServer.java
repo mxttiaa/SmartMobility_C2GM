@@ -37,6 +37,10 @@ public class MainServer {
             server.createContext("/api/veicoli", new VeicoloAPI("CLIENTE", "OPERATORE", "AMMINISTRATORE"));
             server.createContext("/api/veicoli/dettaglio", new DettaglioVeicoloAPI("CLIENTE", "OPERATORE", "AMMINISTRATORE"));
             
+            // API per pagamenti e preventivi
+            server.createContext("/api/pagamento", new PagamentoAPI());
+            server.createContext("/api/preventivo", new PreventivoAPI());
+            
             // API dello storico noleggi (CLIENTE, OPERATORE)
             server.createContext("/api/storico", new StoricoAPI("CLIENTE", "OPERATORE", "AMMINISTRATORE"));
             

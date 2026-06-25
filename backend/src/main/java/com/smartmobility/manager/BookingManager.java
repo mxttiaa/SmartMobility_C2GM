@@ -26,6 +26,10 @@ public class BookingManager {
     }
 
     public Prenotazione prenotaVeicolo(Account account, Veicolo veicolo, String destinazione) {
+        if (!accountDAO.hasMetodoPagamento(account.getEmail())) {
+            throw new IllegalStateException("Metodo di pagamento mancante. Aggiungine uno prima di prenotare.");
+        }
+        
         if (veicolo.getStatoOperativo() != StatoVeicolo.DISPONIBILE) {
             throw new IllegalStateException("Il veicolo selezionato non è al momento disponibile.");
         }
@@ -41,6 +45,10 @@ public class BookingManager {
     }
 
     public Noleggio avviaNoleggio(Account account, Veicolo veicolo) {
+        if (!accountDAO.hasMetodoPagamento(account.getEmail())) {
+            throw new IllegalStateException("Metodo di pagamento mancante. Aggiungine uno prima di noleggiare.");
+        }
+        
         if (veicolo.getStatoOperativo() != StatoVeicolo.DISPONIBILE) {
             throw new IllegalStateException("Veicolo non disponibile");
         }
@@ -68,7 +76,7 @@ public class BookingManager {
         }
     }
 
-    public void terminaNoleggio(String email, String codiceVeicolo) {
+    public double terminaNoleggio(String email, String codiceVeicolo) {
         Noleggio noleggio = noleggioDAO.readActiveByEmailAndVeicolo(email, codiceVeicolo);
         if (noleggio == null) {
             throw new IllegalStateException("Nessun noleggio attivo trovato per questo veicolo.");
@@ -76,8 +84,22 @@ public class BookingManager {
         
         noleggio.termina();
         
-        // UC-21: Calcolo costo e applicazione crediti bonus
-        double costoStimato = 5.0; // Costo fisso per prototipo
+        Veicolo veicolo = veicoloDAO.readByCodice(codiceVeicolo);
+        if (veicolo != null) {
+            veicolo.setStatoOperativo(StatoVeicolo.DISPONIBILE);
+            veicoloDAO.updateStatoEPosizione(veicolo);
+        }
+        
+        // Calcolo costo reale basato sulla durata e sulla tariffa
+        PricingManager pricingManager = new PricingManager();
+        double costoStimato = 0.0;
+        if (veicolo != null) {
+            com.smartmobility.model.Tariffa tariffa = pricingManager.getTariffaPerVeicolo(veicolo);
+            costoStimato = pricingManager.calcolaCostoTotale(noleggio, tariffa);
+        } else {
+            costoStimato = 5.0; // Fallback di sicurezza
+        }
+        
         Account account = accountDAO.readByEmail(email);
         if (account != null) {
             double saldoBonus = account.getSaldoCreditiBonus();
@@ -95,10 +117,6 @@ public class BookingManager {
 
         noleggioDAO.update(noleggio);
         
-        Veicolo veicolo = veicoloDAO.readByCodice(codiceVeicolo);
-        if (veicolo != null) {
-            veicolo.setStatoOperativo(StatoVeicolo.DISPONIBILE);
-            veicoloDAO.updateStatoEPosizione(veicolo);
-        }
+        return noleggio.getCostoFinale();
     }
 }

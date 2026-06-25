@@ -20,6 +20,8 @@ public class TestSistema {
             // 1. Setup: Account e Veicolo
             String email = "utente_sistema_" + System.currentTimeMillis() + "@test.it";
             Account user = userManager.registraAccount("Mario", "Sistema", email);
+            userManager.convalidaCodice(user, "123456"); // Verifica l'account
+            userManager.associaPagamento(user, "1234123412341234|12/26|123"); // Associa carta per poter prenotare
 
             // --- AGGIUNTA PER IL RESET ---
             Veicolo auto = veicoloDAO.readByCodice("AUTO-001");
@@ -45,7 +47,7 @@ public class TestSistema {
 
             // 4. Test Servizi Aggiuntivi (Assistenza)
             System.out.println("-> Test Assistenza...");
-            SessioneAssistenza sess = commManager.richiediAssistenza(user, "Tecnico", "Non riesco a sbloccare");
+            SessioneAssistenza sess = commManager.richiediAssistenza(user.getEmail(), "Tecnico", "Non riesco a sbloccare");
             boolean opDisponibile = commManager.verificaDisponibilitaOperatori();
             if (opDisponibile) {
                 Account operatore = new Account("Op", "Test", "op@test.it"); // Stub
