@@ -2,11 +2,15 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="dns-prefetch" href="http://localhost:8080">
+        <meta name="description" content="Prenota il tuo veicolo smart in pochi secondi. Auto, monopattini e biciclette disponibili a Bari.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Mobility - Prenota Veicolo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="AuthGuard.js"></script>
 </head>
 <body>
 
@@ -18,6 +22,7 @@
         <a href="assistenza.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Assistenza</a>
         <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
         <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
+        <a href="gestione_ticket.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Ticket</a>
     </nav>
 
     <!-- Effetti di sfondo animati -->
@@ -47,11 +52,11 @@
         </div>
 
         <div class="input-group">
-            <input type="number" id="durataStimata" placeholder=" " min="1" required autocomplete="off">
-            <label for="durataStimata">Durata stimata (minuti)</label>
+            <input type="text" id="destinazione" placeholder=" " required autocomplete="off">
+            <label for="destinazione">Destinazione (es. Via Sparano)</label>
             <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
             </svg>
         </div>
 
@@ -87,26 +92,48 @@
 
         async function calcolaPreventivo() {
             const codiceVeicolo = document.getElementById('codiceVeicolo').value.trim();
-            const durata = document.getElementById('durataStimata').value.trim();
+            const destinazione = document.getElementById('destinazione').value.trim();
             const preventivoResult = document.getElementById('preventivoResult');
 
-            if (!codiceVeicolo || !durata) {
-                showResponse('error', 'Inserisci codice veicolo e durata per il preventivo.');
+            if (!codiceVeicolo || !destinazione) {
+                showResponse('error', 'Inserisci codice veicolo e destinazione per il preventivo.');
                 return;
             }
 
+            preventivoResult.style.display = 'block';
+            preventivoResult.textContent = 'Calcolo in corso...';
+            preventivoResult.style.color = 'var(--text-muted)';
+
             try {
-                const response = await fetch(`http://localhost:8080/api/preventivo?codiceVeicolo=${codiceVeicolo}&durata=${durata}`);
+                // Geocoding della destinazione tramite Nominatim (OpenStreetMap)
+                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destinazione + ', Bari')}&limit=1`;
+                const geoRes = await fetch(geocodeUrl);
+                const geoData = await geoRes.json();
+
+                if (geoData.length === 0) {
+                    showResponse('error', 'Destinazione non trovata. Inserisci un indirizzo valido a Bari.');
+                    preventivoResult.style.display = 'none';
+                    return;
+                }
+
+                const destLat = geoData[0].lat;
+                const destLon = geoData[0].lon;
+
+                // Chiama il backend con le coordinate della destinazione
+                const response = await fetch(`http://localhost:8080/api/preventivo?codiceVeicolo=${codiceVeicolo}&lat=${destLat}&lon=${destLon}`);
                 const data = await response.json();
 
                 if (response.ok && data.status === 'success') {
-                    preventivoResult.style.display = 'block';
-                    preventivoResult.textContent = `Costo Stimato: €${data.preventivo.toFixed(2)}`;
+                    preventivoResult.style.color = 'var(--primary)';
+                    preventivoResult.innerHTML = `Costo Stimato: <strong>€${data.preventivo.toFixed(2)}</strong><br><span style="font-size:0.9rem; color:var(--text-muted);">Distanza: ${data.distanza.toFixed(2)} km - Tempo: ${data.minuti} min</span>`;
                 } else {
                     showResponse('error', `Errore preventivo: ${data.message}`);
+                    preventivoResult.style.display = 'none';
                 }
             } catch (error) {
-                showResponse('error', 'Errore di connessione per il calcolo preventivo.');
+                console.error(error);
+                showResponse('error', 'Errore durante il calcolo del preventivo.');
+                preventivoResult.style.display = 'none';
             }
         }
 
@@ -186,5 +213,6 @@
             responseDiv.classList.add('show');
         }
     </script>
+    <script src="AuthGuard.js"></script>
 </body>
 </html>
