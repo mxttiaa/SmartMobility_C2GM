@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="dns-prefetch" href="http://localhost:8080">
+        <meta name="description" content="Gestione utenti e account Smart Mobility.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Utenti - Smart Mobility (Operatore)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            gap: 30px;
+        }
+
+        .search-container {
+            background: rgba(18, 18, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-container input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-container input:focus {
+            border-color: var(--primary);
+        }
+
+        .search-btn {
+            background: var(--primary);
+            color: #121214;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .user-card {
+            background: rgba(18, 18, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 30px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+
+        .user-header h3 {
+            margin: 0;
+            font-size: 22px;
+            color: white;
+        }
+
+        .user-details p {
+            margin: 8px 0;
+            color: var(--text-muted);
+        }
+
+        .badge.bloccato {
+            background: rgba(255, 77, 109, 0.1);
+            color: #ff4d6d;
+            border: 1px solid rgba(255, 77, 109, 0.3);
+        }
+
+        .badge.attivo {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .action-container {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .action-container textarea {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .block-btn {
+            background: #ff4d6d;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .block-btn:hover {
+            background: #e63956;
+            transform: translateY(-2px);
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
+        <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="pagamento.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Pagamenti</a>
+        <a href="assistenza.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Assistenza</a>
+        <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
+        <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
+        <a href="gestione_ticket.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Ticket</a>
+        <a href="gestione_utenti.html" data-role="OPERATORE,AMMINISTRATORE" class="active">Gestione Utenti</a>
+        <a href="statistiche.html" data-role="AMMINISTRAZIONE_PUBBLICA">Statistiche PA</a>
+    </nav>
+
+    <div class="blob blob-1" style="top: -50px; left: -50px;"></div>
+    <div class="blob blob-2" style="bottom: auto; top: 200px; right: -50px;"></div>
+
+    <div class="dashboard-container">
+        
+        <div class="dashboard-title" style="text-align: center;">
+            <h1>Gestione Utenti</h1>
+            <p class="subtitle">Ricerca e sanziona account fraudolenti</p>
+        </div>
+
+        <div id="msgBanner" style="display: none; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; font-weight: 500;"></div>
+
+        <div class="search-container">
+            <input type="email" id="searchEmail" placeholder="Inserisci l'email dell'utente da cercare...">
+            <button class="search-btn" onclick="cercaUtente()">Cerca</button>
+        </div>
+
+        <div id="userCard" class="user-card">
+            <div class="user-header">
+                <h3 id="userName">Nome Utente</h3>
+                <span id="userStatus" class="badge">STATO</span>
+            </div>
+            
+            <div class="user-details">
+                <p><strong>Email:</strong> <span id="userEmail">-</span></p>
+                <p><strong>Ruolo:</strong> <span id="userRole">-</span></p>
+            </div>
+
+            <div id="actionContainer" class="action-container">
+                <p style="color: white; font-weight: 600; margin-bottom: 5px;">Provvedimento Disciplinare</p>
+                <textarea id="motivazione" placeholder="Inserisci la motivazione del blocco dell'account..."></textarea>
+                <button class="block-btn" onclick="bloccaUtente()">Blocca Definitivamente</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentEmail = '';
+
+        function showMessage(msg, isError = false) {
+            const banner = document.getElementById('msgBanner');
+            banner.textContent = msg;
+            banner.style.display = 'block';
+            if (isError) {
+                banner.style.background = 'rgba(255, 77, 109, 0.1)';
+                banner.style.color = '#ff4d6d';
+                banner.style.border = '1px solid rgba(255, 77, 109, 0.3)';
+            } else {
+                banner.style.background = 'rgba(0, 255, 136, 0.1)';
+                banner.style.color = 'var(--primary)';
+                banner.style.border = '1px solid rgba(0, 255, 136, 0.3)';
+            }
+        }
+
+        async function cercaUtente() {
+            const email = document.getElementById('searchEmail').value.trim();
+            const card = document.getElementById('userCard');
+            const banner = document.getElementById('msgBanner');
+            
+            if (!email) {
+                showMessage('Inserisci un\'email valida.', true);
+                card.style.display = 'none';
+                return;
+            }
+
+            banner.style.display = 'none';
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/account?email=${encodeURIComponent(email)}`, {
+                    headers: window.getAuthHeaders()
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentEmail = data.email;
+                    document.getElementById('userName').textContent = `${data.nome} ${data.cognome}`;
+                    document.getElementById('userEmail').textContent = data.email;
+                    document.getElementById('userRole').textContent = data.ruolo;
+
+                    const statusBadge = document.getElementById('userStatus');
+                    statusBadge.textContent = data.stato;
+                    statusBadge.className = 'badge ' + (data.stato === 'ATTIVO' ? 'attivo' : (data.stato === 'BLOCCATO' ? 'bloccato' : ''));
+
+                    if (data.stato === 'BLOCCATO') {
+                        document.getElementById('actionContainer').style.display = 'none';
+                    } else {
+                        document.getElementById('actionContainer').style.display = 'flex';
+                    }
+
+                    card.style.display = 'flex';
+                } else {
+                    showMessage(data.message || 'Utente non trovato.', true);
+                    card.style.display = 'none';
+                }
+            } catch (error) {
+                console.error(error);
+                showMessage('Errore di connessione col server.', true);
+                card.style.display = 'none';
+            }
+        }
+
+        async function bloccaUtente() {
+            const motivazione = document.getElementById('motivazione').value.trim();
+            if (!motivazione) {
+                showMessage('La motivazione è obbligatoria per procedere al blocco.', true);
+                return;
+            }
+
+            if (!confirm(`Sei sicuro di voler bloccare l'account ${currentEmail}? L'azione è irreversibile.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8080/api/account/blocca', {
+                    method: 'POST',
+                    headers: window.getAuthJsonHeaders(),
+                    body: JSON.stringify({ email: currentEmail, motivazione: motivazione })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    showMessage('Account bloccato con successo.', false);
+                    document.getElementById('motivazione').value = '';
+                    cercaUtente(); // Ricarica i dati
+                } else {
+                    showMessage(data.message || 'Errore durante il blocco.', true);
+                }
+            } catch (error) {
+                console.error(error);
+                showMessage('Errore di connessione.', true);
+            }
+        }
+    </script>
+    <script src="AuthGuard.js"></script>
+</body>
+</html>

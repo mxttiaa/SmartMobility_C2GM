@@ -65,8 +65,8 @@ public class PromozioneAPI implements HttpHandler {
         if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
             handleGetPromozioni(exchange, session.getEmail());
         } else if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-            if (path.endsWith("/applica")) {
-                handleApplicaPromozione(exchange, session.getEmail());
+            if (path.endsWith("/valida")) {
+                handleValidaPromozione(exchange, session.getEmail());
             } else {
                 sendResponse(exchange, 404, "{\"status\": \"error\", \"message\": \"Endpoint non trovato\"}");
             }
@@ -102,7 +102,7 @@ public class PromozioneAPI implements HttpHandler {
         }
     }
 
-    private void handleApplicaPromozione(HttpExchange exchange, String email) throws IOException {
+    private void handleValidaPromozione(HttpExchange exchange, String email) throws IOException {
         try {
             String requestBody;
             try (InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
@@ -127,12 +127,8 @@ public class PromozioneAPI implements HttpHandler {
                 return;
             }
 
-            // In uno scenario reale l'applicazione sconto potrebbe modificare il saldo o essere salvata come attiva.
-            // Qui simuliamo l'applicazione e l'eliminazione della promozione "usata".
-            promozioneDAO.delete(codice, email);
-
             String json = "{\"status\": \"success\", "
-                    + "\"message\": \"Promozione applicata con successo\", "
+                    + "\"message\": \"Promozione valida\", "
                     + "\"sconto\": " + prom.getValoreSconto() + "}";
             sendResponse(exchange, 200, json);
 

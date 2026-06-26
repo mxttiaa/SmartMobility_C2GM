@@ -7,7 +7,7 @@
 | **UC-05** | GestireNoleggio | IF-05, IF-14, IF-16 | Sblocco del mezzo tramite identificativo, sosta temporanea e terminazione del servizio. **Include:** `AutenticareUtente`. **Esteso da:** `AssegnareCreditiBonus`. | Utente | *Nessuno* |
 | **UC-06** | CalcolarePercorso | IF-08 | Elaborazione del tragitto ottimale escludendo in automatico le ZTL e i cantieri urbani. | Utente | Maps & GPS Service |
 | **UC-07** | GestireMetodiPagamento | IF-15 | Registrazione e gestione dei metodi di pagamento associati al profilo per gli addebiti automatici. | Utente | Sistema di Pagamento |
-| **UC-08** | GestirePromozioni | IF-10 | Applicazione di sconti o promozioni attive sul noleggio per ottenere benefici economici. | Utente | *Nessuno* |
+| **UC-08** | GestirePromozioni | IF-10 | di sconti o promozioni attive sul noleggio per ottenere benefici economici. | Utente | *Nessuno* |
 | **UC-09** | RichiedereAssistenza | IF-11 | Comunicazione in tempo reale con il supporto clienti per la risoluzione di problematiche in corso. | Utente | *Nessuno* |
 | **UC-10** | SegnalareGuasto | IF-12 | Invio di una segnalazione relativa a un mezzo non funzionante, specificandone l'anomalia. | Utente | *Nessuno* |
 | **UC-11** | AnalizzareStatisticheMobilità | IF-21, IF-22, IF-23, IF-25, IF-27 | Accesso a report aggregati su tendenze di utilizzo, efficienza della flotta, tratte critiche e abbattimento di CO2. | Amministrazione Pubblica | *Nessuno* |

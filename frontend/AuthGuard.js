@@ -18,7 +18,9 @@
     const protectedRoutes = {
         'dashboard.html': ['OPERATORE', 'AMMINISTRATORE'],
         'admin.html':     ['AMMINISTRATORE'],
-        'gestione_ticket.html': ['OPERATORE', 'AMMINISTRATORE']
+        'gestione_ticket.html': ['OPERATORE', 'AMMINISTRATORE'],
+        'gestione_utenti.html': ['OPERATORE', 'AMMINISTRATORE'],
+        'statistiche.html': ['AMMINISTRAZIONE_PUBBLICA']
     };
 
     // Controllo permessi sulla pagina corrente

@@ -23,6 +23,8 @@
         <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
         <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
         <a href="gestione_ticket.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Ticket</a>
+        <a href="gestione_utenti.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Utenti</a>
+        <a href="statistiche.html" data-role="AMMINISTRAZIONE_PUBBLICA">Statistiche PA</a>
     </nav>
 
     <!-- Effetti di sfondo animati -->
@@ -65,6 +67,18 @@
         </button>
         <div id="preventivoResult" style="display: none; text-align: center; color: var(--primary); font-size: 1.2rem; margin-bottom: 15px; font-weight: bold;"></div>
 
+        <!-- SEZIONE PROMOZIONI -->
+        <div class="input-group" style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <div style="flex-grow: 1; position: relative;">
+                <input type="text" id="codicePromozione" placeholder=" " autocomplete="off" style="text-transform: uppercase;">
+                <label for="codicePromozione">Codice Sconto (Opzionale)</label>
+            </div>
+            <button id="promoBtn" onclick="verificaPromozione()" style="width: auto; padding: 0 15px; background: rgba(0, 255, 136, 0.2); color: var(--primary); border: 1px solid var(--primary);">
+                Verifica
+            </button>
+        </div>
+        <div id="promoMessage" style="display: none; text-align: center; font-size: 0.9rem; margin-top: -15px; margin-bottom: 15px;"></div>
+
         <button id="bookBtn" onclick="prenotaVeicolo()">
             <span id="btnText">Prenota Ora</span>
             <div id="btnLoader" class="loader"></div>
@@ -74,6 +88,10 @@
     </div>
 
     <script>
+        let preventivoBase = 0;
+        let scontoAttivo = 0;
+        let codiceScontoAttivo = null;
+
         window.onload = function() {
             // Estrae il parametro 'codice' dall'URL se presente
             const urlParams = new URLSearchParams(window.location.search);
@@ -89,6 +107,62 @@
                 codiceInput.style.borderColor = 'var(--primary)';
             }
         };
+
+        function aggiornaUIPreventivo() {
+            const preventivoResult = document.getElementById('preventivoResult');
+            if (preventivoBase > 0) {
+                let totale = preventivoBase - scontoAttivo;
+                if (totale < 0) totale = 0;
+                
+                if (scontoAttivo > 0) {
+                    preventivoResult.innerHTML = `Costo Stimato: <span style="text-decoration: line-through; color: var(--text-muted); font-size: 0.9rem;">€${preventivoBase.toFixed(2)}</span> <strong style="color: #00ff88;">€${totale.toFixed(2)}</strong><br><span style="font-size:0.8rem; color:#00ff88;">Sconto applicato: -€${scontoAttivo.toFixed(2)}</span>`;
+                } else {
+                    preventivoResult.innerHTML = `Costo Stimato: <strong>€${preventivoBase.toFixed(2)}</strong>`;
+                }
+            }
+        }
+
+        async function verificaPromozione() {
+            const codice = document.getElementById('codicePromozione').value.trim().toUpperCase();
+            const promoMessage = document.getElementById('promoMessage');
+            
+            if (!codice) {
+                promoMessage.textContent = 'Inserisci un codice valido.';
+                promoMessage.style.color = '#ff4d6d';
+                promoMessage.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8080/api/promozione/valida', {
+                    method: 'POST',
+                    headers: getAuthJsonHeaders(),
+                    body: JSON.stringify({ codice: codice })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'success') {
+                    scontoAttivo = data.sconto;
+                    codiceScontoAttivo = codice;
+                    promoMessage.textContent = `Promozione applicata! Sconto di €${data.sconto.toFixed(2)}`;
+                    promoMessage.style.color = '#00ff88';
+                    promoMessage.style.display = 'block';
+                    aggiornaUIPreventivo();
+                } else {
+                    scontoAttivo = 0;
+                    codiceScontoAttivo = null;
+                    promoMessage.textContent = data.message || 'Codice non valido.';
+                    promoMessage.style.color = '#ff4d6d';
+                    promoMessage.style.display = 'block';
+                    aggiornaUIPreventivo();
+                }
+            } catch (error) {
+                promoMessage.textContent = 'Errore di rete durante la verifica.';
+                promoMessage.style.color = '#ff4d6d';
+                promoMessage.style.display = 'block';
+            }
+        }
 
         async function calcolaPreventivo() {
             const codiceVeicolo = document.getElementById('codiceVeicolo').value.trim();
@@ -124,8 +198,10 @@
                 const data = await response.json();
 
                 if (response.ok && data.status === 'success') {
+                    preventivoBase = data.preventivo;
                     preventivoResult.style.color = 'var(--primary)';
-                    preventivoResult.innerHTML = `Costo Stimato: <strong>€${data.preventivo.toFixed(2)}</strong><br><span style="font-size:0.9rem; color:var(--text-muted);">Distanza: ${data.distanza.toFixed(2)} km - Tempo: ${data.minuti} min</span>`;
+                    aggiornaUIPreventivo();
+                    preventivoResult.innerHTML += `<br><span style="font-size:0.9rem; color:var(--text-muted);">Distanza: ${data.distanza.toFixed(2)} km - Tempo: ${data.minuti} min</span>`;
                 } else {
                     showResponse('error', `Errore preventivo: ${data.message}`);
                     preventivoResult.style.display = 'none';
@@ -168,6 +244,10 @@
                 email: email,
                 codiceVeicolo: codiceVeicolo
             };
+
+            if (codiceScontoAttivo) {
+                requestBody.promozione = codiceScontoAttivo;
+            }
 
             try {
                 // Richiesta fetch verso l'API Backend Java

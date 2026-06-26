@@ -86,7 +86,13 @@
                     localStorage.setItem('userName', data.nome + ' ' + data.cognome);
                     localStorage.setItem('userEmail', data.email);
 
-                    window.location.href = 'index.html';
+                    if (data.ruolo === 'AMMINISTRAZIONE_PUBBLICA') {
+                        window.location.href = 'statistiche.html';
+                    } else if (data.ruolo === 'OPERATORE' || data.ruolo === 'AMMINISTRATORE') {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
                 } else {
                     errorBanner.textContent = data.message || 'Credenziali non valide.';
                     errorBanner.style.display = 'block';
