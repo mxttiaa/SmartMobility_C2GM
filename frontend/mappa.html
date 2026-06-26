@@ -3,13 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="dns-prefetch" href="http://localhost:8080">
+        <meta name="description" content="Visualizza in tempo reale la posizione dei veicoli Smart Mobility a Bari.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mappa Veicoli - Smart Mobility</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <link rel="stylesheet" href="style.css">
-    <script src="AuthGuard.js"></script>
     <style>
         body {
             display: flex;
@@ -126,9 +130,14 @@
 
     <nav class="navbar">
         <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
-        <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE" class="active">Mappa</a>
+        <a href="pagamento.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Pagamenti</a>
+        <a href="assistenza.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Assistenza</a>
         <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
         <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
+        <a href="gestione_ticket.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Ticket</a>
+        <a href="gestione_utenti.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Utenti</a>
+        <a href="statistiche.html" data-role="AMMINISTRAZIONE_PUBBLICA">Statistiche PA</a>
     </nav>
 
     <div id="map-container">
@@ -190,6 +199,11 @@
                     headers: window.getAuthHeaders()
                 });
                 
+                if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.replace('login.html');
+                    return;
+                }
                 if (!response.ok) {
                     throw new Error("Errore API");
                 }
@@ -210,6 +224,9 @@
             const showMono = document.getElementById('filter-mono').checked;
             const showBici = document.getElementById('filter-bici').checked;
             const onlyAvailable = document.getElementById('filter-available').checked;
+
+            const bounds = L.latLngBounds();
+            let hasVisibleMarkers = false;
 
             allVeicoli.forEach(veicolo => {
                 if (!showAuto && veicolo.modello === 'Automobile') return;
@@ -255,8 +272,17 @@
 
                 marker.bindPopup(popupContent);
                 markers.push(marker);
+                bounds.extend([lat, lng]);
+                hasVisibleMarkers = true;
             });
+
+            if (hasVisibleMarkers) {
+                // If the user's location is known and centered, this might override it.
+                // But it ensures the user always sees the vehicles!
+                map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
+            }
         }
     </script>
+    <script src="AuthGuard.js"></script>
 </body>
 </html>

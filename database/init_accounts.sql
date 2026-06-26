@@ -5,7 +5,7 @@ USE smart_mobility;
 
 -- 1. Aggiungere le colonne di autenticazione
 ALTER TABLE account ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT '' AFTER email;
-ALTER TABLE account ADD COLUMN ruolo ENUM('CLIENTE','OPERATORE','AMMINISTRATORE') NOT NULL DEFAULT 'CLIENTE' AFTER password_hash;
+ALTER TABLE account ADD COLUMN ruolo ENUM('CLIENTE','OPERATORE','AMMINISTRATORE','AMMINISTRAZIONE_PUBBLICA') NOT NULL DEFAULT 'CLIENTE' AFTER password_hash;
 
 -- 2. Popolare utenti di test con ruoli reali
 -- Password di test: "password123" → SHA-256 hash
@@ -16,5 +16,6 @@ INSERT INTO account (nome, cognome, email, password_hash, ruolo, saldo_crediti_b
 ('Laura', 'Bianchi', 'laura.bianchi@email.it', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'CLIENTE', 5.0, 'ATTIVO'),
 ('Giuseppe', 'Verdi', 'giuseppe.verdi@email.it', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'OPERATORE', 0.0, 'ATTIVO'),
 ('Anna', 'Neri', 'anna.neri@email.it', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'OPERATORE', 0.0, 'ATTIVO'),
-('Admin', 'Sistema', 'admin@smartmobility.it', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'AMMINISTRATORE', 0.0, 'ATTIVO')
+('Admin', 'Sistema', 'admin@smartmobility.it', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'AMMINISTRATORE', 0.0, 'ATTIVO'),
+('Ente', 'Comune', 'pa@smartmobility.it', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'AMMINISTRAZIONE_PUBBLICA', 0.0, 'ATTIVO')
 ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), ruolo = VALUES(ruolo), stato = VALUES(stato);

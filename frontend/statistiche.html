@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiche Mobilità - Amministrazione</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js per i grafici -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 10px 0;
+        }
+        .stat-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        canvas {
+            max-width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            color: var(--primary);
+        }
+        /* Override per abilitare lo scorrimento della pagina */
+        body {
+            overflow: auto !important;
+            align-items: flex-start !important;
+            padding: 80px 0 40px 0;
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+    <script src="AuthGuard.js"></script>
+    
+    <nav class="navbar">
+        <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
+        <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="pagamento.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Pagamenti</a>
+        <a href="assistenza.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Assistenza</a>
+        <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
+        <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
+        <a href="gestione_ticket.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Ticket</a>
+        <a href="gestione_utenti.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Utenti</a>
+        <a href="statistiche.html" data-role="AMMINISTRAZIONE_PUBBLICA" class="active">Statistiche PA</a>
+    </nav>
+
+    <div class="container" style="max-width: 1200px; margin: 0 auto;">
+        <h2 style="text-align: center; margin-bottom: 30px;">Cruscotto Istituzionale - Analisi Mobilità</h2>
+        
+        <div id="loading" style="text-align: center; color: var(--text-muted);">
+            Caricamento statistiche in corso...
+        </div>
+        
+        <div id="errorMsg" class="response error" style="display:none; text-align:center;"></div>
+
+        <div id="dashboardContent" style="display:none;">
+            <!-- KPIS -->
+            <div class="dashboard-container">
+                <div class="stat-card">
+                    <h3>Abbattimento Emissioni</h3>
+                    <div class="stat-value" id="co2Value">0</div>
+                    <div class="stat-subtitle">Kg di CO₂ risparmiati stimati (Bici/Monopattini vs Auto)</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Totale Noleggi Settimana</h3>
+                    <div class="stat-value" id="totNoleggiValue">0</div>
+                    <div class="stat-subtitle">Ultimi 7 giorni attivi</div>
+                </div>
+            </div>
+
+            <!-- GRAFICI -->
+            <div class="dashboard-container">
+                <div class="stat-card">
+                    <h3>Tendenze di Utilizzo (Ultimi 7 gg)</h3>
+                    <canvas id="tendenzeChart"></canvas>
+                </div>
+                <div class="stat-card">
+                    <h3>Efficienza Flotta (Stato Veicoli)</h3>
+                    <canvas id="efficienzaChart"></canvas>
+                </div>
+            </div>
+
+            <!-- TABELLA -->
+            <div class="dashboard-container">
+                <div class="stat-card" style="grid-column: 1 / -1;">
+                    <h3>Tratte Critiche / Veicoli più Utilizzati</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Codice Veicolo</th>
+                                <th>Numero Totale di Noleggi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tratteTableBody">
+                            <!-- Popolato dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('http://localhost:8080/api/statistiche', {
+                    headers: window.getAuthHeaders()
+                });
+                
+                if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.replace('login.html');
+                    return;
+                }
+                if (response.status === 403) {
+                    window.location.replace('accesso_negato.html');
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error("Errore nel recupero delle statistiche.");
+                }
+                
+                const data = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+                
+                // Popola KPI CO2
+                document.getElementById('co2Value').textContent = data.co2RisparmiataKg.toFixed(2) + ' Kg';
+                
+                // Prepara Dati Tendenze
+                const tendenzeLabels = data.tendenze.map(t => t.data).reverse();
+                const tendenzeData = data.tendenze.map(t => t.totale).reverse();
+                
+                // KPI Tot Noleggi Settimana
+                const totNoleggi = tendenzeData.reduce((a, b) => a + b, 0);
+                document.getElementById('totNoleggiValue').textContent = totNoleggi;
+
+                // Grafico Tendenze
+                new Chart(document.getElementById('tendenzeChart'), {
+                    type: 'line',
+                    data: {
+                        labels: tendenzeLabels,
+                        datasets: [{
+                            label: 'Numero Noleggi',
+                            data: tendenzeData,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { color: '#bbb' } },
+                            x: { ticks: { color: '#bbb' } }
+                        }
+                    }
+                });
+
+                // Grafico Efficienza
+                const efficienzaLabels = data.efficienza.map(e => e.stato);
+                const efficienzaData = data.efficienza.map(e => e.totale);
+                
+                new Chart(document.getElementById('efficienzaChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: efficienzaLabels,
+                        datasets: [{
+                            data: efficienzaData,
+                            backgroundColor: ['#2ecc71', '#e74c3c', '#f1c40f', '#95a5a6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#fff' } }
+                        }
+                    }
+                });
+
+                // Tabella Veicoli più usati
+                const tbody = document.getElementById('tratteTableBody');
+                if (data.veicoliPiuUsati.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Nessun dato disponibile</td></tr>';
+                } else {
+                    data.veicoliPiuUsati.forEach(v => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td><strong>${v.codice}</strong></td><td>${v.noleggi}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+            } catch (err) {
+                document.getElementById('loading').style.display = 'none';
+                const errorMsg = document.getElementById('errorMsg');
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = err.message;
+            }
+        });
+    </script>
+</body>
+</html>

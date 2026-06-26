@@ -80,6 +80,7 @@ public class BookingAPI implements HttpHandler {
                 // 3. Estrazione manuale e semplificata dal JSON
                 String email = extractJsonField(requestBody, "email");
                 String codiceVeicolo = extractJsonField(requestBody, "codiceVeicolo");
+                String codicePromozione = extractJsonField(requestBody, "promozione");
 
                 if (email == null || codiceVeicolo == null) {
                     sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"Campi mancanti nel JSON\"}");
@@ -97,6 +98,13 @@ public class BookingAPI implements HttpHandler {
 
                 // 5. Avvio del noleggio
                 bookingManager.avviaNoleggio(account, veicolo);
+
+                // Se c'è un codice promozionale fornito, lo bruciamo (eliminiamo) dal DB in modo che non sia riutilizzabile.
+                // In uno scenario reale potremmo anche legarlo al record noleggio appena creato.
+                if (codicePromozione != null && !codicePromozione.isEmpty()) {
+                    com.smartmobility.dao.PromozioneDAO promozioneDAO = new com.smartmobility.dao.PromozioneDAO();
+                    promozioneDAO.delete(codicePromozione, email);
+                }
 
                 // 6. Invia la risposta JSON finale
                 sendResponse(exchange, 200, "{\"status\": \"success\", \"message\": \"Noleggio avviato\"}");

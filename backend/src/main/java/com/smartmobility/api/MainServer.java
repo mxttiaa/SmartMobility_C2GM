@@ -43,6 +43,8 @@ public class MainServer {
             
             // API dello storico noleggi (CLIENTE, OPERATORE)
             server.createContext("/api/storico", new StoricoAPI("CLIENTE", "OPERATORE", "AMMINISTRATORE"));
+            // API per statistiche (solo AMMINISTRAZIONE_PUBBLICA)
+            server.createContext("/api/statistiche", new StatisticheAPI("AMMINISTRAZIONE_PUBBLICA"));
             
             server.setExecutor(null); // crea un executor di default
             server.start();

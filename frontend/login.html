@@ -3,8 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="dns-prefetch" href="http://localhost:8080">
+        <meta name="description" content="Accedi al tuo account Smart Mobility.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Smart Mobility</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -81,7 +86,13 @@
                     localStorage.setItem('userName', data.nome + ' ' + data.cognome);
                     localStorage.setItem('userEmail', data.email);
 
-                    window.location.href = 'index.html';
+                    if (data.ruolo === 'AMMINISTRAZIONE_PUBBLICA') {
+                        window.location.href = 'statistiche.html';
+                    } else if (data.ruolo === 'OPERATORE' || data.ruolo === 'AMMINISTRATORE') {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
                 } else {
                     errorBanner.textContent = data.message || 'Credenziali non valide.';
                     errorBanner.style.display = 'block';

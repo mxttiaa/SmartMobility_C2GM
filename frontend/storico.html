@@ -3,11 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="dns-prefetch" href="http://localhost:8080">
+        <meta name="description" content="Visualizza lo storico dei tuoi noleggi Smart Mobility.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Mobility - Storico Noleggi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="AuthGuard.js"></script>
     <style>
         /* Overriding flex alignment for dashboard layout */
         body {
@@ -59,8 +63,13 @@
     <nav class="navbar">
         <a href="index.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Prenota Veicolo</a>
         <a href="mappa.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Mappa</a>
+        <a href="pagamento.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Pagamenti</a>
+        <a href="assistenza.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Assistenza</a>
         <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE">Dashboard Operatore</a>
-        <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
+        <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE" class="active">Storico Noleggi</a>
+        <a href="gestione_ticket.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Ticket</a>
+        <a href="gestione_utenti.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Utenti</a>
+        <a href="statistiche.html" data-role="AMMINISTRAZIONE_PUBBLICA">Statistiche PA</a>
     </nav>
 
     <div class="blob blob-1" style="top: -50px; left: -50px;"></div>
@@ -102,8 +111,8 @@
             const savedEmail = localStorage.getItem('userEmail');
             if (savedEmail) {
                 document.getElementById('emailSearch').value = savedEmail;
-                // Opzionale: carica automaticamente lo storico
-                // caricaStorico(); 
+                // Auto-carica lo storico se l'email è già nota
+                caricaStorico();
             }
         });
 
@@ -119,10 +128,16 @@
 
             tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);"><div class="loader" style="display: inline-block; border-top-color: var(--primary); width: 16px; height: 16px; margin-right: 10px; vertical-align: middle;"></div> Caricamento in corso...</td></tr>';
 
+            // AbortController: cancels the fetch if it takes more than 8 seconds
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+
             try {
                 const response = await fetch('http://localhost:8080/api/storico?email=' + encodeURIComponent(email), {
-                    headers: window.getAuthHeaders()
+                    headers: window.getAuthHeaders(),
+                    signal: controller.signal
                 });
+                clearTimeout(timeout);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -135,7 +150,8 @@
                     return;
                 }
 
-                tbody.innerHTML = ''; // Svuota la tabella
+                // Use DocumentFragment for a single DOM update (much faster than appending one by one)
+                const fragment = document.createDocumentFragment();
 
                 data.forEach(item => {
                     const tr = document.createElement('tr');
@@ -161,12 +177,19 @@
                         <td><span class="badge" style="display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: ${badgeColor}; color: ${textColor};">${item.stato}</span></td>
                         <td>${azioneHtml}</td>
                     `;
-                    tbody.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
 
+                tbody.innerHTML = ''; // single reflow clear
+                tbody.appendChild(fragment); // single reflow insert
+
             } catch (error) {
+                clearTimeout(timeout);
+                const msg = error.name === 'AbortError'
+                    ? 'Timeout: il server ha impiegato troppo a rispondere.'
+                    : 'Impossibile recuperare lo storico. Verifica che il server sia acceso.';
                 console.error('Errore nel recupero dello storico:', error);
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #ff4d6d;">Impossibile recuperare lo storico. Verifica che il server sia acceso.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ff4d6d;">${msg}</td></tr>`;
             }
         }
 
@@ -197,6 +220,7 @@
             }
         }
     </script>
+    <script src="AuthGuard.js"></script>
 </body>
 
 </html>

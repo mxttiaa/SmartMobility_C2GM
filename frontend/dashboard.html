@@ -2,11 +2,15 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="dns-prefetch" href="http://localhost:8080">
+        <meta name="description" content="Dashboard operatore Smart Mobility: gestione veicoli e prenotazioni.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Mobility - Dashboard Veicoli</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="AuthGuard.js"></script>
     <style>
         /* Overriding flex alignment for dashboard layout */
         body {
@@ -25,6 +29,9 @@
         <a href="assistenza.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Assistenza</a>
         <a href="dashboard.html" data-role="OPERATORE,AMMINISTRATORE" class="active">Dashboard Operatore</a>
         <a href="storico.html" data-role="CLIENTE,OPERATORE,AMMINISTRATORE">Storico Noleggi</a>
+        <a href="gestione_ticket.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Ticket</a>
+        <a href="gestione_utenti.html" data-role="OPERATORE,AMMINISTRATORE">Gestione Utenti</a>
+        <a href="statistiche.html" data-role="AMMINISTRAZIONE_PUBBLICA">Statistiche PA</a>
     </nav>
 
     <div class="blob blob-1" style="top: -50px; left: -50px;"></div>
@@ -50,16 +57,21 @@
             const container = document.getElementById('veicoli-container');
             const loader = document.getElementById('loadingIndicator');
 
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+
             try {
                 const response = await fetch('http://localhost:8080/api/veicoli', {
-                    headers: window.getAuthHeaders()
+                    headers: window.getAuthHeaders(),
+                    signal: controller.signal
                 });
+                clearTimeout(timeout);
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const veicoli = await response.json();
                 
-                // Rimuovi loader
                 loader.style.display = 'none';
 
                 if (veicoli.length === 0) {
@@ -67,41 +79,44 @@
                     return;
                 }
 
-                // Generazione dinamica delle card
+                // Build all cards in a fragment — single DOM reflow
+                const fragment = document.createDocumentFragment();
                 veicoli.forEach(veicolo => {
                     const card = document.createElement('div');
                     card.className = 'veicolo-card';
 
-                    // Colore badge in base allo stato
-                    let badgeColor = 'rgba(0, 255, 136, 0.1)';
-                    let textColor = 'var(--primary)';
-                    if (veicolo.stato !== 'DISPONIBILE') {
-                        badgeColor = 'rgba(255, 50, 100, 0.1)';
-                        textColor = '#ff4d6d';
-                    }
+                    const isDisponibile = veicolo.stato === 'DISPONIBILE';
+                    const badgeColor = isDisponibile ? 'rgba(0, 255, 136, 0.1)' : 'rgba(255, 50, 100, 0.1)';
+                    const textColor  = isDisponibile ? 'var(--primary)' : '#ff4d6d';
 
                     card.innerHTML = `
                         <h3>${veicolo.modello}</h3>
                         <p>Codice: <strong>${veicolo.codice}</strong></p>
                         <span class="badge" style="background: ${badgeColor}; color: ${textColor};">${veicolo.stato}</span>
-                        <button onclick="prenota('${veicolo.codice}')" ${veicolo.stato !== 'DISPONIBILE' ? 'disabled' : ''}>
+                        <button onclick="prenota('${veicolo.codice}')" ${!isDisponibile ? 'disabled' : ''}>
                             Prenota
                         </button>
                     `;
-
-                    container.appendChild(card);
+                    fragment.appendChild(card);
                 });
 
+                loader.remove(); // clean up loader node entirely
+                container.appendChild(fragment);
+
             } catch (error) {
+                clearTimeout(timeout);
+                const msg = error.name === 'AbortError'
+                    ? 'Timeout: il server non risponde.'
+                    : 'Impossibile caricare i veicoli. Verifica che il server sia acceso.';
                 console.error('Errore nel recupero dei veicoli:', error);
-                loader.innerHTML = '<p style="color: #ff4d6d;">Impossibile caricare i veicoli. Verifica che il server sia acceso.</p>';
+                loader.innerHTML = `<p style="color: #ff4d6d;">${msg}</p>`;
             }
         };
 
         function prenota(codice) {
-            console.log("Prenotazione veicolo:", codice);
-            window.location.href = "index.html?codice=" + codice;
+            window.location.href = 'index.html?codice=' + codice;
         }
     </script>
+    <script src="AuthGuard.js"></script>
 </body>
 </html>

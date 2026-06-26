@@ -135,6 +135,16 @@ public class AccountGestioneAPI implements HttpHandler {
                 return;
             }
 
+            // Verifica che non ci siano noleggi in corso (UC-18 flusso alternativo)
+            com.smartmobility.dao.NoleggioDAO noleggioDAO = new com.smartmobility.dao.NoleggioDAO();
+            java.util.List<com.smartmobility.dao.NoleggioDAO.StoricoItem> storico = noleggioDAO.readByEmail(email);
+            for (com.smartmobility.dao.NoleggioDAO.StoricoItem item : storico) {
+                if ("IN_CORSO".equals(item.stato) || "IN_PAUSA".equals(item.stato)) {
+                    sendResponse(exchange, 400, "{\"status\": \"error\", \"message\": \"L'utente ha un noleggio in corso. Terminare forzatamente la corsa prima di bloccare l'account.\"}");
+                    return;
+                }
+            }
+
             userManager.bloccaProfilo(account, motivazione);
 
             sendResponse(exchange, 200, "{\"status\": \"success\", \"message\": \"Account bloccato con successo\"}");
